@@ -1,7 +1,7 @@
 {
   "name": "sbotto-server",
   "version": "1.0.0",
-  "description": "Seed node per sbotto.io",
+  "description": "Seed node P2P per sbotto.io",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
