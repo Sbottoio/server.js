@@ -1,0 +1,16 @@
+{
+  "name": "sbotto-server",
+  "version": "1.0.0",
+  "description": "Seed node per sbotto.io",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "gun": "^0.2020.520"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
