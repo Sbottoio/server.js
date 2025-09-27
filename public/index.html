@@ -6,104 +6,75 @@
 <title>sbotto.io - Bacheca P2P</title>
 <style>
 body {
-  font-family: "Arial Rounded MT Bold", Arial, sans-serif;
-  background: #f3efe6;
-  margin: 0;
-  padding: 20px;
+  font-family:"Arial Rounded MT Bold", Arial, sans-serif;
+  background:#f3efe6; margin:0; padding:20px;
 }
-.container { max-width: 1200px; margin: auto; text-align: center; }
-h1 { margin-bottom: 10px; }
+.container { max-width:1200px; margin:auto; text-align:center; }
+h1 { margin-bottom:10px; }
 .intro {
-  max-width: 800px;
-  margin: 10px auto 20px auto;
-  padding: 15px 20px;
-  border-radius: 8px;
-  background: #fff3cd;
-  color: #856404;
-  font-weight: bold;
-  font-size: 15px;
-  box-shadow: 0 0 8px rgba(0,0,0,0.1);
-  position: relative;
+  max-width:800px; margin:10px auto 20px auto; padding:15px 20px;
+  border-radius:8px; background:#fff3cd; color:#856404; font-weight:bold;
+  font-size:15px; box-shadow:0 0 8px rgba(0,0,0,0.1); position:relative;
 }
-.info-icon { margin-left: 10px; cursor: pointer; font-size: 18px; }
+.info-icon { margin-left:10px; cursor:pointer; font-size:18px; }
 
 #regolamentoBox {
-  display: none;
-  position: fixed;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  max-width: 500px;
-  background: #fff;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 0 20px rgba(0,0,0,0.3);
-  z-index: 3000;
-  text-align: left;
-  line-height: 1.5;
+  display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%);
+  max-width:500px; background:#fff; padding:20px; border-radius:10px;
+  box-shadow:0 0 20px rgba(0,0,0,0.3); z-index:3000; text-align:left; line-height:1.5;
 }
-#regolamentoBox .close { position: absolute; top: 10px; right: 15px; cursor: pointer; font-size: 20px; }
-#overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; }
+#regolamentoBox .close { position:absolute; top:10px; right:15px; cursor:pointer; font-size:20px; }
+#overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:2000; }
 
-textarea {
-  width: 100%; height: 80px; padding: 10px;
-  border-radius: 5px; border: 1px solid #ccc;
-  resize: none; font-size: 14px;
-}
-.controls {
-  margin: 10px 0; display: flex; flex-wrap: wrap;
-  justify-content: center; gap: 15px;
-}
-.controls label { font-weight: bold; margin-right: 5px; }
+textarea { width:100%; height:80px; padding:10px; border-radius:5px; border:1px solid #ccc; resize:none; font-size:14px; }
+.controls { margin:10px 0; display:flex; flex-wrap:wrap; justify-content:center; gap:15px; }
+.controls label { font-weight:bold; margin-right:5px; }
 button {
-  margin-top: 10px; padding: 10px 20px; border: none;
-  border-radius: 5px; background: #ff7043; color: #fff;
-  cursor: pointer; font-weight: bold;
+  margin-top:10px; padding:10px 20px; border:none; border-radius:5px;
+  background:#ff7043; color:#fff; cursor:pointer; font-weight:bold;
 }
-button:hover { background: #f4511e; }
+button:hover { background:#f4511e; }
 
 #board {
-  position: relative; width: 100%; min-height: 800px;
-  background: #fafafa; border: 2px dashed #ccc; overflow: hidden;
+  position:relative; width:100%; min-height:800px;
+  background:#fafafa; border:2px dashed #ccc; overflow:hidden;
 }
 
-/* 📌 Post-it */
+/* Post-it */
 .note {
-  width: 130px; height: 170px;
-  padding: 10px;
-  border-radius: 2px;
-  position: absolute;
-  overflow: hidden;
-  cursor: grab;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  align-items: center;
-  box-shadow: -3px 3px 6px rgba(0,0,0,.25), inset 0 0 30px rgba(255,255,255,.3);
-  transition: left 0.5s ease, top 0.5s ease, transform 0.3s ease, box-shadow .15s, z-index 0.3s;
-  touch-action: none;
+  width:130px; height:170px; padding:10px; border-radius:2px;
+  position:absolute; overflow:hidden; cursor:grab;
+  display:flex; flex-direction:column; justify-content:flex-start; align-items:center;
+  box-shadow:-3px 3px 6px rgba(0,0,0,.25), inset 0 0 30px rgba(255,255,255,.3);
+  transition: left 0.5s ease, top 0.5s ease, transform 0.3s ease, box-shadow .15s;
+  touch-action:none;
 }
-.note:active { cursor: grabbing; }
-.note:hover { box-shadow: -4px 4px 8px rgba(0,0,0,.35); }
-body.dragging { user-select: none; }
+.note:active { cursor:grabbing; }
+.note:hover { box-shadow:-4px 4px 8px rgba(0,0,0,.35); }
+body.dragging { user-select:none; }
 
+/* Angolo sollevato */
 .note::after {
-  content: ""; position: absolute; right: 0; bottom: 0; width: 40px; height: 40px;
-  background: linear-gradient(135deg, rgba(0,0,0,.25), transparent 70%);
-  clip-path: polygon(100% 0, 0 100%, 100% 100%);
-  pointer-events: none;
+  content:""; position:absolute; right:0; bottom:0; width:40px; height:40px;
+  background:linear-gradient(135deg, rgba(0,0,0,.25), transparent 70%);
+  clip-path:polygon(100% 0, 0 100%, 100% 100%); pointer-events:none;
 }
 
-.note .text { font-size: 13px; font-weight: bold; line-height: 1.3; text-align: center; margin-top: 6px; word-wrap: break-word; }
-.note small { font-size: 10px; color: #444; }
-.note .imgkb { font-size: 10px; color: #555; margin-top: 4px; opacity: 0.8; }
-.note .delete { position: absolute; top: 6px; right: 8px; cursor: pointer; font-weight: bold; font-size: 14px; display: none; }
-.note:hover .delete { display: block; }
+.note .text { font-size:13px; font-weight:bold; line-height:1.3; text-align:center; margin-top:6px; word-wrap:break-word; }
+.note small { font-size:10px; color:#444; }
+.note .imgkb { font-size:10px; color:#555; margin-top:4px; opacity:0.8; }
+
+.note .delete {
+  position:absolute; top:6px; right:8px; cursor:pointer;
+  font-weight:bold; font-size:14px; display:none;
+}
+.note:hover .delete { display:block; }
 
 .note::before {
-  content: ""; width: 12px; height: 12px;
-  background: radial-gradient(circle at 30% 30%, #ff5252, #c62828);
-  border-radius: 50%; position: absolute; top: 6px; left: calc(50% - 6px);
-  box-shadow: 0 2px 5px rgba(0,0,0,.3);
+  content:""; width:12px; height:12px;
+  background:radial-gradient(circle at 30% 30%, #ff5252, #c62828);
+  border-radius:50%; position:absolute; top:6px; left:calc(50% - 6px);
+  box-shadow:0 2px 5px rgba(0,0,0,.3);
 }
 
 /* Colori */
@@ -124,61 +95,101 @@ body.dragging { user-select: none; }
   box-shadow: none;
 }
 .madama {
-  background: linear-gradient(135deg,#ff1744,#b71c1c);
-  color: #fff;
+  background:linear-gradient(135deg,#ff1744,#b71c1c);
+  color:#fff;
   animation: lampeggio 0.8s infinite alternate;
 }
 @keyframes lampeggio {
-  from { box-shadow: 0 0 5px #ff1744, 0 0 10px #ff1744; }
-  to   { box-shadow: 0 0 20px #ff1744, 0 0 40px #ff1744; }
+  from { box-shadow:0 0 5px #ff1744, 0 0 10px #ff1744; }
+  to   { box-shadow:0 0 20px #ff1744, 0 0 40px #ff1744; }
 }
 
-#counterBox { margin-top: 10px; font-size: 14px; color: #333; font-weight: bold; }
+#shareZone {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 80px;
+  height: 60px;
+  background: url('https://upload.wikimedia.org/wikipedia/commons/4/4e/Envelope_font_awesome.svg') no-repeat center/contain;
+  opacity: 0.6;
+  transition: transform 0.2s, opacity 0.2s;
+  z-index: 2000;
+}
+#shareZone.active { opacity: 1; transform: scale(1.1); }
+
+#counterBox {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #333;
+  font-weight: bold;
+}
 </style>
 </head>
 <body>
-<div class="container">
-  <h1>📌 Sbotto un Post-it</h1>
-  <div class="intro">
-     ⚡ Se pensi di muovere un post-it di nascosto… buona fortuna 👀
-     <span class="info-icon" onclick="toggleRegolamento()">ℹ️</span>
+  <div class="container">
+    <h1>📌 Sbotto un Post-it</h1>
+
+    <div class="intro">
+       ⚡ Se pensi di muovere un post-it di nascosto… buona fortuna 👀
+       <span class="info-icon" onclick="toggleRegolamento()">ℹ️</span>
+    </div>
+
+    <textarea id="noteInput" placeholder="Scrivi qui il tuo post-it (max 70 caratteri)..."></textarea>
+
+    <div class="controls">
+      <div>
+        <label>Colore Post-it:</label>
+        <select id="colorSelect">
+          <option value="yellow">Giallo</option>
+          <option value="blue">Blu</option>
+          <option value="green">Verde</option>
+          <option value="pink">Rosa</option>
+          <option value="orange">Arancione</option>
+        </select>
+      </div>
+      <div>
+        <label>Colore Testo:</label>
+        <select id="textColorSelect">
+          <option value="#000000">Nero</option>
+          <option value="#1e88e5">Blu</option>
+          <option value="#d32f2f">Rosso</option>
+          <option value="#388e3c">Verde</option>
+          <option value="#8e24aa">Viola</option>
+          <option value="#ffffff">Bianco</option>
+        </select>
+      </div>
+      <div>
+        <label>Sticker fotografico:</label>
+        <input type="file" id="imageInput" accept="image/*">
+      </div>
+    </div>
+   
+    <button onclick="aggiungiNota()">Pubblica Post-it</button>
+    <div id="counterBox">📝 Totale post-it: 0</div>
+    <div id="board"></div>
   </div>
 
-  <textarea id="noteInput" placeholder="Scrivi qui il tuo post-it (max 70 caratteri)..."></textarea>
-  <div class="controls">
-    <div>
-      <label>Colore Post-it:</label>
-      <select id="colorSelect">
-        <option value="yellow">Giallo</option>
-        <option value="blue">Blu</option>
-        <option value="green">Verde</option>
-        <option value="pink">Rosa</option>
-        <option value="orange">Arancione</option>
-      </select>
-    </div>
-    <div>
-      <label>Colore Testo:</label>
-      <select id="textColorSelect">
-        <option value="#000000">Nero</option>
-        <option value="#1e88e5">Blu</option>
-        <option value="#d32f2f">Rosso</option>
-        <option value="#388e3c">Verde</option>
-        <option value="#8e24aa">Viola</option>
-        <option value="#ffffff">Bianco</option>
-      </select>
-    </div>
-    <div>
-      <label>Sticker fotografico:</label>
-      <input type="file" id="imageInput" accept="image/*">
-    </div>
+  <div id="shareZone"></div>
+  <div id="overlay" onclick="toggleRegolamento()"></div>
+  <div id="regolamentoBox">
+    <div class="close" onclick="toggleRegolamento()">×</div>
+    <h2>👋 Benvenuto su sbotto.io</h2>
+    <p>Bacheca anonima di post-it collaborativi.<br>Sfogati o lancia idee in tempo reale.</p>
+    <hr>
+    <h2>✨ In Diretta</h2>
+    <p>Ogni post-it che compare qui è stato scritto da qualcuno, da qualche parte, nello stesso momento.</p>
+    <hr>
+    <h2>📜 Regole</h2>
+    <ul>
+      <li>✍️ Messaggi brevi (max 70 caratteri).</li>
+      <li>🚫 No spam o insulti.</li>
+      <li>👻 Alcuni post-it speciali non si cancellano.</li>
+      <li>🤝 Rispetta gli altri e divertiti.</li>
+    </ul>
   </div>
- 
-  <button onclick="aggiungiNota()">Pubblica Post-it</button>
-  <div id="counterBox">📝 Totale post-it: 0</div>
-  <div id="board"></div>
-</div>
 
 <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script>
 const gun = Gun({ peers: ["https://sbotto-server.onrender.com/gun"] });
 const notesDB = gun.get("p2p-postit");
@@ -216,7 +227,7 @@ function aggiungiNota(){
     rot: (Math.random()*10 - 5).toFixed(2)
   };
   const special = parseSpecial(text);
-  if(special){ Object.assign(note, special); }
+  if(special) Object.assign(note, special);
   else {
     note.color = document.getElementById("colorSelect").value;
     note.textColor = document.getElementById("textColorSelect").value;
@@ -235,14 +246,15 @@ function aggiungiNota(){
         let height = img.height;
         if (width > height && width > maxSize) { height *= maxSize / width; width = maxSize; }
         else if (height > maxSize) { width *= maxSize / height; height = maxSize; }
-        canvas.width = width;
-        canvas.height = height;
+        canvas.width = Math.max(1, Math.round(width));
+        canvas.height = Math.max(1, Math.round(height));
         const ctx = canvas.getContext("2d");
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = "high";
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        note.image = canvas.toDataURL("image/webp", 0.7);
-        note.imageKB = Math.round(dataUrlBytes(note.image)/1024);
+        const dataUrl = canvas.toDataURL("image/webp", 0.7);
+        note.image = dataUrl;
+        note.imageKB = Math.max(1, Math.round(dataUrlBytes(dataUrl)/1024));
         notesDB.get(note.id).put(note);
       };
       img.src = e.target.result;
@@ -253,8 +265,9 @@ function aggiungiNota(){
   }
 
   counterDB.get("total").once(val=>{
-    counterDB.get("total").put((val||0) + 1);
+    counterDB.get("total").put((val||0)+1);
   });
+
   document.getElementById("noteInput").value="";
 }
 
@@ -273,49 +286,79 @@ function parseSpecial(input){
 }
 
 function eliminaNota(id){
-  if(confirm("Vuoi eliminare questo post-it?")){
-    notesDB.get(id).put({deleted:true});
-  }
+  if(confirm("Vuoi eliminare questo post-it?")) notesDB.get(id).put({deleted:true});
 }
+
+document.addEventListener("pointermove", e=>{
+  if(!drag) return;
+  e.preventDefault();
+  const board = document.getElementById("board");
+  const b = board.getBoundingClientRect();
+  const el = drag.el;
+  let x = e.clientX - b.left - drag.offsetX;
+  let y = e.clientY - b.top  - drag.offsetY;
+  const maxX = board.clientWidth - el.offsetWidth;
+  const maxY = board.clientHeight - el.offsetHeight;
+  x = Math.max(0, Math.min(x, maxX));
+  y = Math.max(0, Math.min(y, maxY));
+  el.style.left = x + "px";
+  el.style.top = y + "px";
+});
+document.addEventListener("pointerup", ()=>{
+  if(!drag) return;
+  const { id, el } = drag;
+  const n = store[id];
+  if(n){ n.x = parseInt(el.style.left)||0; n.y = parseInt(el.style.top)||0;
+    notesDB.get(id).put({ x:n.x, y:n.y });
+  }
+  el.style.zIndex = n ? n.originalZ || "" : "";
+  document.body.classList.remove("dragging");
+  drag = null;
+});
 
 function render(){
   const board = document.getElementById("board");
   board.innerHTML="";
-  const sorted = Object.values(store).sort((a,b) => b.date - a.date); // 🆕 più nuovi sopra
-  sorted.forEach(n=>{
-    if(!n || n.deleted) return;
-    const div = document.createElement("div");
-    div.id = "note_"+n.id;
-    div.className = `note ${n.color}`;
-    div.style.color = n.textColor;
-    div.style.left = (n.x||0) + "px";
-    div.style.top  = (n.y||0) + "px";
-    div.style.transform = `rotate(${n.rot}deg)`;
+  Object.values(store)
+    .filter(n => n && !n.deleted)
+    .sort((a,b)=> b.date - a.date) // nuovi sopra
+    .forEach(n=>{
+      const div = document.createElement("div");
+      div.id = "note_"+n.id;
+      div.className = `note ${n.color}`;
+      div.style.color = n.textColor;
+      div.style.left = (n.x||0)+"px";
+      div.style.top  = (n.y||0)+"px";
+      div.style.transform = `rotate(${n.rot}deg)`;
 
-    let deleteBtn = "";
-    if(!["black","ghost","madama","red","lilla","fucsia"].includes(n.color)){
-      deleteBtn = `<div class="delete" onclick="event.stopPropagation(); eliminaNota('${n.id}')">×</div>`;
-    }
+      let deleteBtn = "";
+      if(!["black","ghost","madama","red","lilla","fucsia"].includes(n.color)){
+        deleteBtn = `<div class="delete" onclick="event.stopPropagation(); eliminaNota('${n.id}')">×</div>`;
+      }
 
-    const imgTag = n.image ? `<img src="${n.image}" style="max-width:90px; max-height:90px; border-radius:8px; margin-top:5px;">` : "";
-    const kb = n.imageKB || (n.image ? Math.round(dataUrlBytes(n.image)/1024) : null);
-    const kbTag = n.image ? `<div class="imgkb">~${kb} KB</div>` : "";
+      const imgTag = n.image ? `<img src="${n.image}" style="max-width:90px; max-height:90px; border-radius:8px; margin-top:5px;">` : "";
+      const kb = (n.imageKB || (n.image ? Math.round(dataUrlBytes(n.image)/1024) : null));
+      const kbTag = n.image ? `<div class="imgkb">~${kb} KB</div>` : "";
 
-    div.innerHTML = `${deleteBtn}${imgTag}${kbTag}<div class="text">${n.text || ""}</div><small>${new Date(n.date).toLocaleString()}</small>`;
-    
-    div.addEventListener("pointerdown", (e)=>{
-      if(e.target.classList.contains("delete")) return;
-      div.style.zIndex = 9999;
-      setTimeout(()=> div.style.zIndex = 1, 3000); // ⏱️ torna sotto dopo 3s
+      div.innerHTML = `${deleteBtn}${imgTag}${kbTag}<div class="text">${n.text || ""}</div><small>${new Date(n.date).toLocaleString()}</small>`;
+
+      div.addEventListener("pointerdown", e=>{
+        if(e.target.classList.contains("delete")) return;
+        const elRect = div.getBoundingClientRect();
+        drag = { id: n.id, el: div, offsetX: e.clientX - elRect.left, offsetY: e.clientY - elRect.top };
+        div.style.transition = "none";
+        div.style.zIndex = 9999;
+        document.body.classList.add("dragging");
+        if(div.setPointerCapture) { try{ div.setPointerCapture(e.pointerId);}catch(_){ } }
+        e.preventDefault();
+      });
+      board.appendChild(div);
     });
-
-    board.appendChild(div);
-  });
 }
 
 notesDB.map().on((n,id)=>{
-  if(!n || !n.id || n.deleted){ delete store[id]; }
-  else { store[id] = {...store[id], ...n}; }
+  if(!n || !n.id || n.deleted) delete store[id];
+  else store[id] = Object.assign(store[id]||{}, n);
   render();
 });
 
