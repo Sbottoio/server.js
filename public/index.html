@@ -234,6 +234,7 @@ body.dragging{ user-select:none; }
 <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script>
+// ✅ Connetti direttamente al tuo nodo
 const gun = Gun({
   peers: ["https://sbotto-server.onrender.com/gun"]
 });
@@ -342,42 +343,12 @@ function eliminaNota(id){
   }
 }
 
-// ✋ Drag & drop
-document.addEventListener("pointermove", e => {
-  if(!drag) return;
-  e.preventDefault();
-  const board = document.getElementById("board");
-  const b = board.getBoundingClientRect();
-  const el = drag.el;
-  let x = e.clientX - b.left - drag.offsetX;
-  let y = e.clientY - b.top  - drag.offsetY;
-  const maxX = board.clientWidth  - el.offsetWidth;
-  const maxY = board.clientHeight - el.offsetHeight;
-  x = Math.max(0, Math.min(x, maxX));
-  y = Math.max(0, Math.min(y, maxY));
-  el.style.left = x + "px";
-  el.style.top  = y + "px";
-});
-
-document.addEventListener("pointerup", () => {
-  if(!drag) return;
-  const { id, el } = drag;
-  const n = store[id];
-  if(n){ n.x = parseInt(el.style.left)||0; n.y = parseInt(el.style.top)||0;
-    notesDB.get(id).put({ x:n.x, y:n.y });
-  }
-  el.style.transition = "left 0.5s ease, top 0.5s ease, transform 0.3s ease, box-shadow .15s";
-  document.body.classList.remove("dragging");
-  drag = null;
-});
-
 // 🧱 Renderizza board
 function render(){
   const board = document.getElementById("board");
   board.innerHTML="";
-  // Ordina per data decrescente
-  const sorted = Object.values(store).filter(n => n && !n.deleted).sort((a,b)=>b.date - a.date);
-  sorted.forEach(n=>{
+  Object.values(store).forEach(n=>{
+    if(!n || n.deleted) return;
     const div = document.createElement("div");
     div.id = "note_"+n.id;
     div.className = `note ${n.color}`;
@@ -402,20 +373,6 @@ function render(){
       <div class="text">${n.text || ""}</div>
       <small>${new Date(n.date).toLocaleString()}</small>
     `;
-
-    div.addEventListener("pointerdown",(e)=>{
-      if(e.target.classList.contains("delete")) return;
-      const elRect = div.getBoundingClientRect();
-      drag = { id: n.id, el: div,
-        offsetX: e.clientX - elRect.left,
-        offsetY: e.clientY - elRect.top };
-      div.style.transition = "none";
-      div.style.zIndex = 9999;
-      document.body.classList.add("dragging");
-      if(div.setPointerCapture) { try{ div.setPointerCapture(e.pointerId);}catch(_){ } }
-      e.preventDefault();
-    });
-
     board.appendChild(div);
   });
 }
@@ -430,6 +387,11 @@ notesDB.map().on((n,id)=>{
 counterDB.get("total").on(val=>{
   document.getElementById("counterBox").textContent = "📝 Totale post-it: " + (val || 0);
 });
+
+// 🩺 🔄 Battito ogni 30s per tenere vivo il nodo
+setInterval(() => {
+  notesDB.get('ping').put({ time: Date.now() });
+}, 30000);
 </script>
 </body>
 </html>
