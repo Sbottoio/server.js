@@ -147,7 +147,6 @@ body.dragging{ user-select:none; }
   to   { box-shadow:0 0 20px #ff1744, 0 0 40px #ff1744; }
 }
 
-/* Busta */
 #shareZone {
   position: fixed;
   bottom: 20px;
@@ -235,15 +234,17 @@ body.dragging{ user-select:none; }
 <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script>
+// ✅ Connetti direttamente al tuo nodo
 const gun = Gun({
-  peers: ["https://sbotto-server.onrender.com/gun"] // ✅ Usa ora il TUO nodo
+  peers: ["https://sbotto-server.onrender.com/gun"]
 });
 const notesDB = gun.get("p2p-postit");
 const counterDB = gun.get("p2p-postit-counter");
+
 let store = {};
 let drag = null;
-let totalCounter = 0;
 
+// 📌 Mostra/Nascondi regolamento
 function toggleRegolamento(){
   const box = document.getElementById("regolamentoBox");
   const overlay = document.getElementById("overlay");
@@ -252,6 +253,7 @@ function toggleRegolamento(){
   overlay.style.display = visible ? "none" : "block";
 }
 
+// 📏 Calcolo peso immagine
 function dataUrlBytes(dataUrl){
   const base64 = dataUrl.split(',')[1] || "";
   const len = base64.length;
@@ -259,8 +261,10 @@ function dataUrlBytes(dataUrl){
   return Math.max(0, Math.floor(len * 3 / 4) - padding);
 }
 
+// ✏️ Aggiungi post-it
 function aggiungiNota(){
   let text = document.getElementById("noteInput").value.trim();
+  if(!text) return;
   if(text.length > 70) text = text.substring(0,67)+"...";
   const board = document.getElementById("board");
   const maxX = Math.max(0, board.clientWidth-150);
@@ -302,7 +306,6 @@ function aggiungiNota(){
         note.image = dataUrl;
         note.imageKB = Math.max(1, Math.round(dataUrlBytes(dataUrl)/1024));
         notesDB.get(note.id).put(note);
-        fileInput.value = "";
       };
       img.src = e.target.result;
     };
@@ -312,73 +315,13 @@ function aggiungiNota(){
   }
 
   counterDB.get("total").once(val=>{
-    const current = val || 0;
-    counterDB.get("total").put(current + 1);
+    counterDB.get("total").put((val||0) + 1);
   });
+
   document.getElementById("noteInput").value="";
 }
 
-function pointerMove(e){
-  if(!drag) return;
-  e.preventDefault();
-  const board = document.getElementById("board");
-  const b = board.getBoundingClientRect();
-  const el = drag.el;
-  let x = e.clientX - b.left - drag.offsetX;
-  let y = e.clientY - b.top  - drag.offsetY;
-  const maxX = board.clientWidth  - el.offsetWidth;
-  const maxY = board.clientHeight - el.offsetHeight;
-  x = Math.max(0, Math.min(x, maxX));
-  y = Math.max(0, Math.min(y, maxY));
-  el.style.left = x + "px";
-  el.style.top  = y + "px";
-
-  const shareZone = document.getElementById("shareZone").getBoundingClientRect();
-  if(e.clientX > shareZone.left && e.clientX < shareZone.right &&
-     e.clientY > shareZone.top && e.clientY < shareZone.bottom){
-      document.getElementById("shareZone").classList.add("active");
-      drag.overShare = true;
-  } else {
-      document.getElementById("shareZone").classList.remove("active");
-      drag.overShare = false;
-  }
-}
-function pointerUp(){
-  if(!drag) return;
-  const { id, el, overShare } = drag;
-  if(overShare){ condividiNota(id); }
-  else {
-    const n = store[id];
-    if(n){ n.x = parseInt(el.style.left)||0; n.y = parseInt(el.style.top)||0;
-      notesDB.get(id).put({ x:n.x, y:n.y });
-    }
-  }
-  el.style.transition = "left 0.5s ease, top 0.5s ease, transform 0.3s ease, box-shadow .15s";
-  document.getElementById("shareZone").classList.remove("active");
-  document.body.classList.remove("dragging");
-  drag = null;
-}
-document.addEventListener("pointermove", pointerMove, {passive:false});
-document.addEventListener("pointerup", pointerUp);
-
-function condividiNota(id){
-  const div = document.getElementById("note_"+id);
-  if(!div) return;
-  html2canvas(div).then(canvas=>{
-    canvas.toBlob(blob=>{
-      const file = new File([blob], "postit.png", {type:"image/png"});
-      if(navigator.canShare && navigator.canShare({files:[file]})){
-        navigator.share({title:"Post-it",text:"📌 Guarda questo post-it:",files:[file]}).catch(()=>{});
-      } else {
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = "postit.png";
-        link.click();
-      }
-    });
-  });
-}
-
+// 🧠 Rileva hashtag speciali
 function parseSpecial(input){
   const m = input.match(/^\s*#([a-zàèéìòóù]+)\b/i);
   if(!m) return null;
@@ -393,11 +336,14 @@ function parseSpecial(input){
   return null;
 }
 
+// 🗑️ Elimina post-it
 function eliminaNota(id){
-  if(!confirm("Vuoi eliminare questo post-it?")) return;
-  notesDB.get(id).put({deleted:true});
+  if(confirm("Vuoi eliminare questo post-it?")){
+    notesDB.get(id).put({deleted:true});
+  }
 }
 
+// 🧱 Renderizza board
 function render(){
   const board = document.getElementById("board");
   board.innerHTML="";
@@ -427,22 +373,11 @@ function render(){
       <div class="text">${n.text || ""}</div>
       <small>${new Date(n.date).toLocaleString()}</small>
     `;
-    div.addEventListener("pointerdown",(e)=>{
-      if(e.target.classList.contains("delete")) return;
-      const elRect = div.getBoundingClientRect();
-      drag = { id: n.id, el: div,
-        offsetX: e.clientX - elRect.left,
-        offsetY: e.clientY - elRect.top };
-      div.style.transition = "none";
-      div.style.zIndex = 9999;
-      document.body.classList.add("dragging");
-      if(div.setPointerCapture) { try{ div.setPointerCapture(e.pointerId);}catch(_){ } }
-      e.preventDefault();
-    });
     board.appendChild(div);
   });
 }
 
+// 📡 Aggiornamenti in tempo reale
 notesDB.map().on((n,id)=>{
   if(!n || !n.id || n.deleted){ delete store[id]; }
   else { store[id]=Object.assign(store[id]||{}, n); }
@@ -450,8 +385,7 @@ notesDB.map().on((n,id)=>{
 });
 
 counterDB.get("total").on(val=>{
-  totalCounter = val || 0;
-  document.getElementById("counterBox").textContent = "📝 Totale post-it: " + totalCounter;
+  document.getElementById("counterBox").textContent = "📝 Totale post-it: " + (val || 0);
 });
 </script>
 </body>
