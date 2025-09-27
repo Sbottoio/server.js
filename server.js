@@ -52,4 +52,13 @@ if (Object.keys(initialData).length > 0) {
   });
 }
 
+// 📤 Rotta per fornire snapshot JSON
+app.get('/snapshot.json', (req, res) => {
+  if (fs.existsSync(DATA_FILE)) {
+    res.sendFile(DATA_FILE);
+  } else {
+    res.json({});
+  }
+});
+
 console.log("✅ Nodo GUN attivo e pronto come peer P2P.");
