@@ -25,7 +25,6 @@ h1{margin-bottom:10px;}
 }
 .info-icon { margin-left: 10px; cursor: pointer; font-size: 18px; }
 
-/* Popup regolamento */
 #regolamentoBox {
   display: none;
   position: fixed;
@@ -71,7 +70,7 @@ button:hover{background:#f4511e;}
   background:#fafafa; border:2px dashed #ccc; overflow:hidden;
 }
 
-/* Post-it base */
+/* Post-it */
 .note{
   width:130px; height:170px;
   padding:10px;
@@ -94,20 +93,12 @@ body.dragging{ user-select:none; }
   clip-path:polygon(100% 0, 0 100%, 100% 100%); pointer-events:none;
 }
 
-/* Contenuti post-it */
-.note .sticker{
-  width:90px; height:90px; object-fit:contain;
-  margin-top:4px; margin-bottom:4px;
-  /* bordo bianco tipo adesivo: viene dal PNG, qui solo leggero glow */
-  filter: drop-shadow(0 1px 0 rgba(0,0,0,.15));
-}
 .note .text{
   font-size:13px; font-weight:bold; line-height:1.3; text-align:center;
   margin-top:6px; word-wrap:break-word;
 }
 .note small{ font-size:10px; color:#444; }
 
-/* Peso immagine */
 .note .imgkb {
   font-size:10px;
   color:#555;
@@ -115,7 +106,6 @@ body.dragging{ user-select:none; }
   opacity:0.8;
 }
 
-/* icona elimina */
 .note .delete{
   position:absolute; top:6px; right:8px; cursor:pointer;
   font-weight:bold; font-size:14px; display:none;
@@ -130,7 +120,7 @@ body.dragging{ user-select:none; }
   box-shadow:0 2px 5px rgba(0,0,0,.3);
 }
 
-/* Colori classici */
+/* Colori */
 .yellow{background:linear-gradient(135deg,#fff59d,#fdd835);}
 .blue  {background:linear-gradient(135deg,#90caf9,#42a5f5);}
 .green {background:linear-gradient(135deg,#a5d6a7,#66bb6a);}
@@ -157,7 +147,6 @@ body.dragging{ user-select:none; }
   to   { box-shadow:0 0 20px #ff1744, 0 0 40px #ff1744; }
 }
 
-/* Zona busta (presente ma non obbligatoria) */
 #shareZone {
   position: fixed;
   bottom: 20px;
@@ -171,7 +160,6 @@ body.dragging{ user-select:none; }
 }
 #shareZone.active { opacity: 1; transform: scale(1.1); }
 
-/* Contatore */
 #counterBox {
   margin-top: 10px;
   font-size: 14px;
@@ -179,20 +167,10 @@ body.dragging{ user-select:none; }
   font-weight: bold;
 }
 
-/* Barra sticker emozionali */
-#stickersBar{
-  display:flex; gap:8px; justify-content:center; flex-wrap:wrap;
+.sticker-img {
+  max-width: 70px;
+  margin: 5px auto;
 }
-.sticker-btn{
-  width:44px; height:44px; border-radius:10px; border:2px solid #eee;
-  background:#fff; cursor:pointer; padding:4px;
-  display:flex; align-items:center; justify-content:center;
-  transition: transform .12s, box-shadow .12s, border-color .12s;
-}
-.sticker-btn img{ max-width:100%; max-height:100%; }
-.sticker-btn:hover{ transform: translateY(-1px); box-shadow:0 2px 6px rgba(0,0,0,.15); }
-.sticker-btn.active{ border-color:#ff7043; box-shadow:0 0 0 3px rgba(255,112,67,.2); }
-.sticker-hint{ font-size:12px; color:#666; margin-top:-6px; }
 </style>
 </head>
 <body>
@@ -233,27 +211,13 @@ body.dragging{ user-select:none; }
         <input type="file" id="imageInput" accept="image/*">
       </div>
     </div>
-
-    <!-- 🎭 STICKER EMOZIONALI (alternativi alla foto) -->
-    <div style="margin-top:10px;">
-      <div class="sticker-hint">Scegli uno sticker emozionale (oppure carica una foto):</div>
-      <div id="stickersBar">
-        <!-- i src puntano a /public/stickers/...  -->
-        <button class="sticker-btn" data-sticker="happy.png"      title="Felice"><img src="stickers/happy.png"      alt="happy"></button>
-        <button class="sticker-btn" data-sticker="sad.png"        title="Triste"><img src="stickers/sad.png"        alt="sad"></button>
-        <button class="sticker-btn" data-sticker="angry.png"      title="Arrabbiato"><img src="stickers/angry.png"      alt="angry"></button>
-        <button class="sticker-btn" data-sticker="surprised.png"  title="Sorpreso"><img src="stickers/surprised.png"  alt="surprised"></button>
-        <button class="sticker-btn" data-sticker="scared.png"     title="Impaurito"><img src="stickers/scared.png"     alt="scared"></button>
-        <button class="sticker-btn" data-sticker="relaxed.png"    title="Rilassato"><img src="stickers/relaxed.png"    alt="relaxed"></button>
-      </div>
-    </div>
    
     <button onclick="aggiungiNota()">Pubblica Post-it</button>
     <div id="counterBox">📝 Totale post-it: 0</div>
     <div id="board"></div>
   </div>
 
-  <!-- Overlay + Box regolamento -->
+  <div id="shareZone"></div>
   <div id="overlay" onclick="toggleRegolamento()"></div>
   <div id="regolamentoBox">
     <div class="close" onclick="toggleRegolamento()">×</div>
@@ -273,52 +237,14 @@ body.dragging{ user-select:none; }
   </div>
 
 <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script>
-// ✅ Connetti al tuo nodo
-const gun = Gun({
-  peers: ["https://sbotto-server.onrender.com/gun"]
-});
+const gun = Gun({ peers: ["https://sbotto-server.onrender.com/gun"] });
 const notesDB = gun.get("p2p-postit");
 const counterDB = gun.get("p2p-postit-counter");
 
 let store = {};
-let drag = null;
-let selectedSticker = null; // es: "happy.png"
 
-// Gestione barra sticker (alternativi alla foto)
-const stickersBar = document.getElementById('stickersBar');
-const imageInput = document.getElementById('imageInput');
-
-stickersBar.addEventListener('click', (e)=>{
-  const btn = e.target.closest('.sticker-btn');
-  if(!btn) return;
-  // toggle selezione
-  if(btn.classList.contains('active')){
-    btn.classList.remove('active');
-    selectedSticker = null;
-    // riabilita foto
-    imageInput.disabled = false;
-  } else {
-    // deseleziona tutti
-    document.querySelectorAll('.sticker-btn.active').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
-    selectedSticker = btn.dataset.sticker; // nome file
-    // disabilita foto
-    imageInput.value = "";
-    imageInput.disabled = true;
-  }
-});
-
-// Se l'utente sceglie una foto, disabilita gli sticker
-imageInput.addEventListener('change', ()=>{
-  if(imageInput.files && imageInput.files[0]){
-    selectedSticker = null;
-    document.querySelectorAll('.sticker-btn.active').forEach(b=>b.classList.remove('active'));
-  }
-});
-
-// Toggle regolamento
+// 📌 Mostra/Nascondi regolamento
 function toggleRegolamento(){
   const box = document.getElementById("regolamentoBox");
   const overlay = document.getElementById("overlay");
@@ -327,215 +253,75 @@ function toggleRegolamento(){
   overlay.style.display = visible ? "none" : "block";
 }
 
-// Calcola peso immagine
-function dataUrlBytes(dataUrl){
-  const base64 = dataUrl.split(',')[1] || "";
-  const len = base64.length;
-  const padding = (base64.endsWith("==") ? 2 : (base64.endsWith("=") ? 1 : 0));
-  return Math.max(0, Math.floor(len * 3 / 4) - padding);
-}
-
-// Aggiungi nota
+// ✏️ Aggiungi post-it
 function aggiungiNota(){
   let text = document.getElementById("noteInput").value.trim();
   if(!text) return;
   if(text.length > 70) text = text.substring(0,67)+"...";
+
   const board = document.getElementById("board");
   const maxX = Math.max(0, board.clientWidth-150);
   const maxY = Math.max(0, board.clientHeight-170);
 
   let note = {
     id: Math.random().toString(36).substr(2, 9),
-    text, date: Date.now(),
+    text,
+    date: Date.now(),
     x: Math.floor(Math.random()*maxX),
     y: Math.floor(Math.random()*maxY),
     rot: (Math.random()*10 - 5).toFixed(2)
   };
 
-  const special = parseSpecial(text);
-  if(special){ Object.assign(note, special); }
-  else {
-    note.color = document.getElementById("colorSelect").value;
-    note.textColor = document.getElementById("textColorSelect").value;
-  }
+  const mood = parseMood(text);
+  if (mood) note.sticker = mood;
 
-  // Se è stato selezionato uno sticker emozionale, lo aggiungiamo e blocchiamo la foto
-  if(selectedSticker){
-    note.sticker = "stickers/" + selectedSticker; // salviamo il path
-    note.image = null;
-    note.imageKB = null;
-    // NOTA: sticker non modificabile dopo la pubblicazione (nessun campo UI per cambiarlo)
-    notesDB.get(note.id).put(note);
-  } else {
-    // Altrimenti gestiamo la foto (se presente)
-    const file = imageInput.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const img = new Image();
-        img.onload = function() {
-          const canvas = document.createElement("canvas");
-          const maxSize = 150;
-          let width = img.width;
-          let height = img.height;
-          if (width > height && width > maxSize) { height *= maxSize / width; width = maxSize; }
-          else if (height > maxSize) { width *= maxSize / height; height = maxSize; }
-          canvas.width = Math.max(1, Math.round(width));
-          canvas.height = Math.max(1, Math.round(height));
-          const ctx = canvas.getContext("2d");
-          ctx.imageSmoothingEnabled = true;
-          ctx.imageSmoothingQuality = "high";
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-          const dataUrl = canvas.toDataURL("image/webp", 0.7);
-          note.image = dataUrl;
-          note.imageKB = Math.max(1, Math.round(dataUrlBytes(dataUrl)/1024));
-          notesDB.get(note.id).put(note);
-        };
-        img.src = e.target.result;
-      };
-      reader.readAsDataURL(file);
-    } else {
-      notesDB.get(note.id).put(note);
-    }
-  }
-
-  // incrementa contatore
-  counterDB.get("total").once(val=>{
-    counterDB.get("total").put((val||0) + 1);
-  });
-
-  // reset UI
-  document.getElementById("noteInput").value="";
-  imageInput.value = "";
-  imageInput.disabled = false;
-  selectedSticker = null;
-  document.querySelectorAll('.sticker-btn.active').forEach(b=>b.classList.remove('active'));
+  notesDB.get(note.id).put(note);
+  counterDB.get("total").once(val => counterDB.get("total").put((val||0)+1));
+  document.getElementById("noteInput").value = "";
 }
 
-// Rileva comandi speciali
-function parseSpecial(input){
-  const m = input.match(/^\s*#([a-zàèéìòóù]+)\b/i);
-  if(!m) return null;
-  const tag = m[1].toLowerCase();
-  const rest = input.replace(/^\s*#[^\s]+\s*/,'').trim();
-  if(tag === 'mod')    return { color:'black',  textColor:'#fff', text:rest };
-  if(tag === 'ghost')  return { color:'ghost',  textColor:'rgba(0,0,0,0.3)', text:rest };
-  if(tag === 'madama') return { color:'madama', textColor:'#fff', text:rest };
-  if(tag === 'red' || tag === 'rosso')   return { color:'red',   textColor:'#fff', text:rest };
-  if(tag === 'lilla')  return { color:'lilla',  textColor:'#fff', text:rest };
-  if(tag === 'fucsia' || tag === 'fuxsia') return { color:'fucsia', textColor:'#fff', text:rest };
+// 🧠 Rileva mood
+function parseMood(text){
+  if (/#felice/i.test(text)) return "felice.png";
+  if (/#arrabbiato/i.test(text)) return "arrabbiato.png";
+  if (/#triste/i.test(text)) return "triste.png";
   return null;
 }
 
-// Elimina nota
-function eliminaNota(id){
-  if(!confirm("Vuoi eliminare questo post-it?")) return;
-  notesDB.get(id).put({deleted:true});
-}
-
-// Rendering
+// 🧱 Renderizza board
 function render(){
   const board = document.getElementById("board");
   board.innerHTML="";
   Object.values(store).forEach(n=>{
     if(!n || n.deleted) return;
-
     const div = document.createElement("div");
-    div.id = "note_"+n.id;
-    div.className = `note ${n.color}`;
-    div.style.color = n.textColor || "#000";
+    div.className = `note ${n.color || 'yellow'}`;
     div.style.left = (n.x||0) + "px";
     div.style.top  = (n.y||0) + "px";
     div.style.transform = `rotate(${n.rot}deg)`;
 
-    let deleteBtn = "";
-    if(!["black","ghost","madama","red","lilla","fucsia"].includes(n.color)){
-      deleteBtn = `<div class="delete" onclick="event.stopPropagation(); eliminaNota('${n.id}')">×</div>`;
+    let content = "";
+    if (n.sticker) {
+      content += `<img src="stickers/${n.sticker}" class="sticker-img">`;
     }
+    content += `<div class="text">${n.text || ""}</div>`;
+    content += `<small>${new Date(n.date).toLocaleString()}</small>`;
 
-    // Sticker emozionale (se presente) ha priorità sulla foto
-    const stickerTag = n.sticker ? `<img class="sticker" src="${n.sticker}" alt="sticker">` : "";
-    const imgTag = (!n.sticker && n.image) ? `<img src="${n.image}" style="max-width:90px; max-height:90px; border-radius:8px; margin-top:5px;">` : "";
-    const kb = (n.imageKB || (n.image ? Math.round(dataUrlBytes(n.image)/1024) : null));
-    const kbTag = (!n.sticker && n.image) ? `<div class="imgkb">~${kb} KB</div>` : "";
-
-    div.innerHTML = `
-      ${deleteBtn}
-      ${stickerTag}
-      ${imgTag}
-      ${kbTag}
-      <div class="text">${n.text || ""}</div>
-      <small>${new Date(n.date).toLocaleString()}</small>
-    `;
-
-    // Drag start
-    div.addEventListener("pointerdown",(e)=>{
-      if(e.target.classList.contains("delete")) return;
-      const elRect = div.getBoundingClientRect();
-      drag = {
-        id: n.id, el: div,
-        offsetX: e.clientX - elRect.left,
-        offsetY: e.clientY - elRect.top
-      };
-      div.style.transition = "none";
-      div.style.zIndex = 9999;
-      document.body.classList.add("dragging");
-      if(div.setPointerCapture) { try{ div.setPointerCapture(e.pointerId);}catch(_){ } }
-      e.preventDefault();
-    });
-
+    div.innerHTML = content;
     board.appendChild(div);
   });
 }
 
-// Dragging globale
-function pointerMove(e){
-  if(!drag) return;
-  e.preventDefault();
-  const board = document.getElementById("board");
-  const b = board.getBoundingClientRect();
-  const el = drag.el;
-  let x = e.clientX - b.left - drag.offsetX;
-  let y = e.clientY - b.top  - drag.offsetY;
-  const maxX = board.clientWidth  - el.offsetWidth;
-  const maxY = board.clientHeight - el.offsetHeight;
-  x = Math.max(0, Math.min(x, maxX));
-  y = Math.max(0, Math.min(y, maxY));
-  el.style.left = x + "px";
-  el.style.top  = y + "px";
-}
-function pointerUp(){
-  if(!drag) return;
-  const { id, el } = drag;
-  const n = store[id];
-  if(n){
-    n.x = parseInt(el.style.left)||0;
-    n.y = parseInt(el.style.top)||0;
-    notesDB.get(id).put({ x:n.x, y:n.y });
-  }
-  el.style.transition = "left 0.5s ease, top 0.5s ease, transform 0.3s ease, box-shadow .15s";
-  document.body.classList.remove("dragging");
-  drag = null;
-}
-document.addEventListener("pointermove", pointerMove, {passive:false});
-document.addEventListener("pointerup", pointerUp);
-
-// Ascolta database
+// 📡 Aggiornamenti in tempo reale
 notesDB.map().on((n,id)=>{
   if(!n || !n.id || n.deleted){ delete store[id]; }
   else { store[id]=Object.assign(store[id]||{}, n); }
   render();
 });
 
-// Contatore globale
 counterDB.get("total").on(val=>{
-  document.getElementById("counterBox").textContent = "📝 Totale post-it: " + (val||0);
+  document.getElementById("counterBox").textContent = "📝 Totale post-it: " + (val || 0);
 });
-
-// 🫀 Heartbeat: mantiene vivo il nodo e aiuta Safari
-setInterval(()=>{
-  notesDB.get("heartbeat").put({ t: Date.now() });
-}, 30000);
 </script>
 </body>
 </html>
