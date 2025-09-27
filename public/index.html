@@ -5,61 +5,125 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>sbotto.io - Bacheca P2P</title>
 <style>
-  body{font-family:"Arial Rounded MT Bold", Arial, sans-serif;background:#f3efe6;margin:0;padding:20px;}
-  .container{max-width:1200px;margin:auto;text-align:center;}
-  h1{margin-bottom:10px;}
+body{
+  font-family:"Arial Rounded MT Bold", Arial, sans-serif;
+  background:#f3efe6; margin:0; padding:20px;
+}
+.container{max-width:1200px; margin:auto; text-align:center;}
+h1{margin-bottom:10px;}
+.intro{
+  max-width:800px; margin:10px auto 20px auto; padding:15px 20px;
+  border-radius:8px; background:#fff3cd; color:#856404; font-weight:bold; font-size:15px;
+  box-shadow:0 0 8px rgba(0,0,0,0.1); position:relative;
+}
+.info-icon{margin-left:10px; cursor:pointer; font-size:18px;}
 
-  .intro{max-width:800px;margin:10px auto 20px auto;padding:15px 20px;border-radius:8px;background:#fff3cd;color:#856404;font-weight:bold;font-size:15px;box-shadow:0 0 8px rgba(0,0,0,0.1);position:relative;}
-  .info-icon{margin-left:10px;cursor:pointer;font-size:18px;}
+#regolamentoBox{
+  display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
+  max-width:500px; background:#fff; padding:20px; border-radius:10px;
+  box-shadow:0 0 20px rgba(0,0,0,0.3); z-index:3000; text-align:left; line-height:1.5;
+}
+#regolamentoBox .close{position:absolute; top:10px; right:15px; cursor:pointer; font-size:20px;}
+#overlay{display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:2000;}
 
-  #regolamentoBox{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);max-width:500px;background:#fff;padding:20px;border-radius:10px;box-shadow:0 0 20px rgba(0,0,0,0.3);z-index:3000;text-align:left;line-height:1.5;}
-  #regolamentoBox .close{position:absolute;top:10px;right:15px;cursor:pointer;font-size:20px;}
-  #overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:2000;}
+textarea{
+  width:100%; height:80px; padding:10px; border-radius:5px; border:1px solid #ccc;
+  resize:none; font-size:14px;
+}
+.controls{margin:10px 0; display:flex; flex-wrap:wrap; justify-content:center; gap:15px;}
+.controls label{font-weight:bold; margin-right:5px;}
+button{
+  margin-top:10px; padding:10px 20px; border:none; border-radius:5px;
+  background:#ff7043; color:#fff; cursor:pointer; font-weight:bold;
+}
+button:hover{background:#f4511e;}
 
-  textarea{width:100%;height:80px;padding:10px;border-radius:5px;border:1px solid #ccc;resize:none;font-size:14px;}
-  .controls{margin:10px 0;display:flex;flex-wrap:wrap;justify-content:center;gap:15px;}
-  .controls label{font-weight:bold;margin-right:5px;}
-  button{margin-top:10px;padding:10px 20px;border:none;border-radius:5px;background:#ff7043;color:#fff;cursor:pointer;font-weight:bold;}
-  button:hover{background:#f4511e;}
+#board{
+  position:relative; width:100%; min-height:800px;
+  background:#fafafa; border:2px dashed #ccc; overflow:hidden;
+}
 
-  #board{position:relative;width:100%;min-height:800px;background:#fafafa;border:2px dashed #ccc;overflow:hidden;}
+/* Post-it */
+.note{
+  width:130px; height:170px; padding:10px; border-radius:2px;
+  position:absolute; overflow:hidden; cursor:grab;
+  display:flex; flex-direction:column; justify-content:flex-start; align-items:center;
+  box-shadow:-3px 3px 6px rgba(0,0,0,.25), inset 0 0 30px rgba(255,255,255,.3);
+  transition:left .5s ease, top .5s ease, transform .3s ease, box-shadow .15s;
+  touch-action:none;
+}
+.note:active{cursor:grabbing;}
+.note:hover{ box-shadow:-4px 4px 8px rgba(0,0,0,.35); }
+body.dragging{ user-select:none; }
 
-  /* Post-it */
-  .note{width:130px;height:170px;padding:10px;border-radius:2px;position:absolute;overflow:hidden;cursor:grab;display:flex;flex-direction:column;justify-content:flex-start;align-items:center;box-shadow:-3px 3px 6px rgba(0,0,0,.25), inset 0 0 30px rgba(255,255,255,.3);transition:left .5s ease, top .5s ease, transform .3s ease, box-shadow .15s;touch-action:none;}
-  .note:active{cursor:grabbing;}
-  .note:hover{box-shadow:-4px 4px 8px rgba(0,0,0,.35);}
-  body.dragging{user-select:none;}
+/* Angolo sollevato */
+.note::after{
+  content:""; position:absolute; right:0; bottom:0; width:40px; height:40px;
+  background:linear-gradient(135deg, rgba(0,0,0,.25), transparent 70%);
+  clip-path:polygon(100% 0, 0 100%, 100% 100%); pointer-events:none;
+}
 
-  .note::after{content:"";position:absolute;right:0;bottom:0;width:40px;height:40px;background:linear-gradient(135deg, rgba(0,0,0,.25), transparent 70%);clip-path:polygon(100% 0, 0 100%, 100% 100%);pointer-events:none;}
-  .note .text{font-size:13px;font-weight:bold;line-height:1.3;text-align:center;margin-top:6px;word-wrap:break-word;}
-  .note small{font-size:10px;color:#444;}
-  .note .imgkb{font-size:10px;color:#555;margin-top:4px;opacity:.8;}
+.note .text{ font-size:13px; font-weight:bold; line-height:1.3; text-align:center; margin-top:6px; word-wrap:break-word; }
+.note small{ font-size:10px; color:#444; }
+.note .imgkb{ font-size:10px; color:#555; margin-top:4px; opacity:.8; }
 
-  .note .delete{position:absolute;top:6px;right:8px;cursor:pointer;font-weight:bold;font-size:14px;display:none;}
-  .note:hover .delete{display:block;}
+.note .delete{
+  position:absolute; top:6px; right:8px; cursor:pointer;
+  font-weight:bold; font-size:14px; display:none;
+}
+.note:hover .delete{ display:block; }
 
-  .note::before{content:"";width:12px;height:12px;background:radial-gradient(circle at 30% 30%, #ff5252, #c62828);border-radius:50%;position:absolute;top:6px;left:calc(50% - 6px);box-shadow:0 2px 5px rgba(0,0,0,.3);}
+/* Pin rosso */
+.note::before{
+  content:""; width:12px; height:12px;
+  background:radial-gradient(circle at 30% 30%, #ff5252, #c62828);
+  border-radius:50%; position:absolute; top:6px; left:calc(50% - 6px);
+  box-shadow:0 2px 5px rgba(0,0,0,.3);
+}
 
-  .yellow{background:linear-gradient(135deg,#fff59d,#fdd835);}
-  .blue{background:linear-gradient(135deg,#90caf9,#42a5f5);}
-  .green{background:linear-gradient(135deg,#a5d6a7,#66bb6a);}
-  .pink{background:linear-gradient(135deg,#f48fb1,#ec407a);}
-  .orange{background:linear-gradient(135deg,#ffcc80,#fb8c00);}
-  .black{background:linear-gradient(135deg,#000,#333);color:#fff;}
-  .red{background:linear-gradient(135deg,#ff8a80,#e53935);color:#fff;}
-  .lilla{background:linear-gradient(135deg,#ce93d8,#8e24aa);color:#fff;}
-  .fucsia,.fuxsia{background:linear-gradient(135deg,#f06292,#ad1457);color:#fff;}
-  .ghost{background:rgba(255,255,255,0.05);color:rgba(0,0,0,0.3);border:1px dashed rgba(0,0,0,0.15);backdrop-filter:blur(2px);box-shadow:none;}
-  .madama{background:linear-gradient(135deg,#ff1744,#b71c1c);color:#fff;animation:lampeggio .8s infinite alternate;}
-  @keyframes lampeggio{from{box-shadow:0 0 5px #ff1744,0 0 10px #ff1744;}to{box-shadow:0 0 20px #ff1744,0 0 40px #ff1744;}}
+/* Colori */
+.yellow{background:linear-gradient(135deg,#fff59d,#fdd835);}
+.blue  {background:linear-gradient(135deg,#90caf9,#42a5f5);}
+.green {background:linear-gradient(135deg,#a5d6a7,#66bb6a);}
+.pink  {background:linear-gradient(135deg,#f48fb1,#ec407a);}
+.orange{background:linear-gradient(135deg,#ffcc80,#fb8c00);}
+.black {background:linear-gradient(135deg,#000,#333); color:#fff;}
+.red    {background:linear-gradient(135deg,#ff8a80,#e53935); color:#fff;}
+.lilla  {background:linear-gradient(135deg,#ce93d8,#8e24aa); color:#fff;}
+.fucsia,.fuxsia {background:linear-gradient(135deg,#f06292,#ad1457); color:#fff;}
+.ghost {
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(0,0,0,0.3);
+  border: 1px dashed rgba(0,0,0,0.15);
+  backdrop-filter: blur(2px);
+  box-shadow: none;
+}
+.madama {
+  background:linear-gradient(135deg,#ff1744,#b71c1c);
+  color:#fff;
+  animation: lampeggio .8s infinite alternate;
+}
+@keyframes lampeggio{
+  from { box-shadow:0 0 5px #ff1744, 0 0 10px #ff1744; }
+  to   { box-shadow:0 0 20px #ff1744, 0 0 40px #ff1744; }
+}
 
-  #shareZone{position:fixed;bottom:20px;left:20px;max-width:92vw;background:rgba(0,0,0,.75);color:#fff;font-size:13px;padding:8px 12px;border-radius:10px;z-index:4000;display:flex;gap:6px;align-items:center}
-  #shareZone .dot{width:8px;height:8px;border-radius:50%;}
-  #shareZone.ok .dot{background:#47d147;}
-  #shareZone.warn .dot{background:#ffcc00;}
-  #shareZone .time{opacity:.9}
+/* Zona busta (share) */
+#shareZone{
+  position:fixed; bottom:20px; right:20px; width:80px; height:60px;
+  background:url('https://upload.wikimedia.org/wikipedia/commons/4/4e/Envelope_font_awesome.svg') no-repeat center/contain;
+  opacity:.6; transition:transform .2s, opacity .2s; z-index:2000;
+}
+#shareZone.active{ opacity:1; transform:scale(1.1); }
 
-  #counterBox{margin-top:10px;font-size:14px;color:#333;font-weight:bold;}
+#counterBox{ margin-top:10px; font-size:14px; color:#333; font-weight:bold; }
+
+/* Banner aggiornamento */
+#autoRefreshBanner{
+  position:fixed; left:10px; bottom:10px; padding:6px 10px; font-size:12px;
+  background:rgba(0,0,0,.65); color:#fff; border-radius:6px; z-index:2500;
+}
+#autoRefreshBanner small{opacity:.8;}
 </style>
 </head>
 <body>
@@ -67,8 +131,8 @@
     <h1>📌 Sbotto un Post-it</h1>
 
     <div class="intro">
-      ⚡ Se pensi di muovere un post-it di nascosto… buona fortuna 👀
-      <span class="info-icon" onclick="toggleRegolamento()">ℹ️</span>
+       ⚡ Se pensi di muovere un post-it di nascosto… buona fortuna 👀
+       <span class="info-icon" onclick="toggleRegolamento()">ℹ️</span>
     </div>
 
     <textarea id="noteInput" placeholder="Scrivi qui il tuo post-it (max 70 caratteri)..."></textarea>
@@ -100,18 +164,14 @@
         <input type="file" id="imageInput" accept="image/*">
       </div>
     </div>
-
+   
     <button onclick="aggiungiNota()">Pubblica Post-it</button>
     <div id="counterBox">📝 Totale post-it: 0</div>
     <div id="board"></div>
   </div>
 
-  <div id="shareZone" class="warn">
-    <span class="dot"></span>
-    <span id="liveLabel">Aggiornamento automatico attivo</span>
-    <span class="time" id="snapTime">— in attesa dello snapshot…</span>
-  </div>
-
+  <!-- Share + Overlays -->
+  <div id="shareZone" title="Trascina qui per condividere"></div>
   <div id="overlay" onclick="toggleRegolamento()"></div>
   <div id="regolamentoBox">
     <div class="close" onclick="toggleRegolamento()">×</div>
@@ -130,26 +190,23 @@
     </ul>
   </div>
 
+  <!-- Banner refresh -->
+  <div id="autoRefreshBanner">🔄 Aggiornamento automatico attivo — <small id="lastSnapshot">in attesa…</small></div>
+
 <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script>
-/* ==========
-   SETUP GUN
-   ========== */
+/* =====================
+   P2P + Snapshot boost
+   ===================== */
 const gun = Gun({ peers: ["https://sbotto-server.onrender.com/gun"] });
-const notesDB   = gun.get("p2p-postit");
+const notesDB = gun.get("p2p-postit");
 const counterDB = gun.get("p2p-postit-counter");
 
-/* ==========
-   STATE
-   ========== */
-let store = {};          // id -> nota
+let store = {};
 let drag = null;
-let lastSnapshotAt = 0;  // ms UNIX locale dell'ultimo snapshot applicato
 
-/* ==========
-   UI HELPERS
-   ========== */
+/* ===== UI helpers ===== */
 function toggleRegolamento(){
   const box = document.getElementById("regolamentoBox");
   const overlay = document.getElementById("overlay");
@@ -157,7 +214,6 @@ function toggleRegolamento(){
   box.style.display = visible ? "none" : "block";
   overlay.style.display = visible ? "none" : "block";
 }
-
 function dataUrlBytes(dataUrl){
   const base64 = dataUrl.split(',')[1] || "";
   const len = base64.length;
@@ -165,18 +221,14 @@ function dataUrlBytes(dataUrl){
   return Math.max(0, Math.floor(len * 3 / 4) - padding);
 }
 
-/* ==========
-   CREA NOTA
-   ========== */
+/* ===== Add note ===== */
 function aggiungiNota(){
   let text = document.getElementById("noteInput").value.trim();
   if(!text) return;
   if(text.length > 70) text = text.substring(0,67)+"...";
-
   const board = document.getElementById("board");
   const maxX = Math.max(0, board.clientWidth-150);
   const maxY = Math.max(0, board.clientHeight-170);
-
   let note = {
     id: Math.random().toString(36).substr(2, 9),
     text, date: Date.now(),
@@ -184,7 +236,6 @@ function aggiungiNota(){
     y: Math.floor(Math.random()*maxY),
     rot: (Math.random()*10 - 5).toFixed(2)
   };
-
   const special = parseSpecial(text);
   if(special){ Object.assign(note, special); }
   else {
@@ -194,9 +245,6 @@ function aggiungiNota(){
 
   const fileInput = document.getElementById("imageInput");
   const file = fileInput.files[0];
-
-  const putNote = (n)=> notesDB.get(n.id).put(n);
-
   if (file) {
     const reader = new FileReader();
     reader.onload = function(e) {
@@ -206,9 +254,9 @@ function aggiungiNota(){
         const maxSize = 150;
         let w = img.width, h = img.height;
         if (w > h && w > maxSize) { h *= maxSize / w; w = maxSize; }
-        else if (h > maxSize)      { w *= maxSize / h; h = maxSize; }
+        else if (h > maxSize) { w *= maxSize / h; h = maxSize; }
         canvas.width = Math.max(1, Math.round(w));
-        canvas.height= Math.max(1, Math.round(h));
+        canvas.height = Math.max(1, Math.round(h));
         const ctx = canvas.getContext("2d");
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = "high";
@@ -216,23 +264,22 @@ function aggiungiNota(){
         const dataUrl = canvas.toDataURL("image/webp", 0.7);
         note.image = dataUrl;
         note.imageKB = Math.max(1, Math.round(dataUrlBytes(dataUrl)/1024));
-        putNote(note);
-        fileInput.value = "";
+        notesDB.get(note.id).put(note);
       };
       img.src = e.target.result;
     };
     reader.readAsDataURL(file);
   } else {
-    putNote(note);
+    notesDB.get(note.id).put(note);
   }
 
-  counterDB.get("total").once(val=> counterDB.get("total").put((val||0)+1));
+  counterDB.get("total").once(val=>{
+    counterDB.get("total").put((val||0) + 1);
+  });
   document.getElementById("noteInput").value="";
 }
 
-/* ==========
-   TAG SPECIALI
-   ========== */
+/* ===== Special tags ===== */
 function parseSpecial(input){
   const m = input.match(/^\s*#([a-zàèéìòóù]+)\b/i);
   if(!m) return null;
@@ -241,80 +288,20 @@ function parseSpecial(input){
   if(tag === 'mod')    return { color:'black',  textColor:'#fff', text:rest };
   if(tag === 'ghost')  return { color:'ghost',  textColor:'rgba(0,0,0,0.3)', text:rest };
   if(tag === 'madama') return { color:'madama', textColor:'#fff', text:rest };
-  if(tag === 'red' || tag === 'rosso') return { color:'red', textColor:'#fff', text:rest };
+  if(tag === 'red' || tag === 'rosso')   return { color:'red',   textColor:'#fff', text:rest };
   if(tag === 'lilla')  return { color:'lilla',  textColor:'#fff', text:rest };
   if(tag === 'fucsia' || tag === 'fuxsia') return { color:'fucsia', textColor:'#fff', text:rest };
   return null;
 }
 
-/* ==========
-   DELETE
-   ========== */
+/* ===== Delete ===== */
 function eliminaNota(id){
   if(confirm("Vuoi eliminare questo post-it?")){
     notesDB.get(id).put({deleted:true});
   }
 }
 
-/* ==========
-   RENDER
-   ========== */
-function render(){
-  const board = document.getElementById("board");
-  board.innerHTML = "";
-
-  // più nuovi sopra: ordino per data ASC e appendo in coda (i più nuovi vengono dopo)
-  const items = Object.values(store)
-    .filter(n => n && !n.deleted)
-    .sort((a,b)=> (a.date||0) - (b.date||0));
-
-  for(const n of items){
-    const div = document.createElement("div");
-    div.id = "note_"+n.id;
-    div.className = `note ${n.color || 'yellow'}`;
-    div.style.color = n.textColor || '#000';
-    div.style.left = (n.x||0) + "px";
-    div.style.top  = (n.y||0) + "px";
-    div.style.transform = `rotate(${n.rot||0}deg)`;
-
-    let deleteBtn = "";
-    if(!["black","ghost","madama","red","lilla","fucsia"].includes(n.color)){
-      deleteBtn = `<div class="delete" onclick="event.stopPropagation(); eliminaNota('${n.id}')">×</div>`;
-    }
-
-    const imgTag = n.image ? `<img src="${n.image}" style="max-width:90px; max-height:90px; border-radius:8px; margin-top:5px;">` : "";
-    const kb = (n.imageKB || (n.image ? Math.round(dataUrlBytes(n.image)/1024) : null));
-    const kbTag = n.image ? `<div class="imgkb">~${kb} KB</div>` : "";
-
-    div.innerHTML = `
-      ${deleteBtn}
-      ${imgTag}
-      ${kbTag}
-      <div class="text">${n.text || ""}</div>
-      <small>${new Date(n.date||Date.now()).toLocaleString()}</small>
-    `;
-
-    // drag & drop
-    div.addEventListener("pointerdown",(e)=>{
-      if(e.target.classList.contains("delete")) return;
-      const r = div.getBoundingClientRect();
-      drag = {
-        id: n.id, el: div,
-        offsetX: e.clientX - r.left,
-        offsetY: e.clientY - r.top
-      };
-      div.style.transition = "none";
-      div.dataset.prevZ = div.style.zIndex || "";
-      div.style.zIndex = 9999;              // sale in cima mentre lo sposti
-      document.body.classList.add("dragging");
-      if(div.setPointerCapture){ try{ div.setPointerCapture(e.pointerId);}catch(_){ } }
-      e.preventDefault();
-    });
-
-    board.appendChild(div);
-  }
-}
-
+/* ===== Drag & drop (con share zone) ===== */
 function pointerMove(e){
   if(!drag) return;
   e.preventDefault();
@@ -329,94 +316,140 @@ function pointerMove(e){
   y = Math.max(0, Math.min(y, maxY));
   el.style.left = x + "px";
   el.style.top  = y + "px";
+
+  const shareZone = document.getElementById("shareZone").getBoundingClientRect();
+  if(e.clientX > shareZone.left && e.clientX < shareZone.right &&
+     e.clientY > shareZone.top && e.clientY < shareZone.bottom){
+      document.getElementById("shareZone").classList.add("active");
+      drag.overShare = true;
+  } else {
+      document.getElementById("shareZone").classList.remove("active");
+      drag.overShare = false;
+  }
 }
 function pointerUp(){
   if(!drag) return;
-  const { id, el } = drag;
-  const n = store[id];
-  if(n){
-    n.x = parseInt(el.style.left)||0;
-    n.y = parseInt(el.style.top)||0;
-    notesDB.get(id).put({ x:n.x, y:n.y });
+  const { id, el, overShare } = drag;
+  if(overShare){ condividiNota(id); }
+  else {
+    const n = store[id];
+    if(n){ n.x = parseInt(el.style.left)||0; n.y = parseInt(el.style.top)||0;
+      notesDB.get(id).put({ x:n.x, y:n.y, date: Date.now() }); // aggiorna ultimo tocco
+    }
   }
   el.style.transition = "left .5s ease, top .5s ease, transform .3s ease, box-shadow .15s";
-  el.style.zIndex = el.dataset.prevZ || ""; // torna alla pila naturale
+  document.getElementById("shareZone").classList.remove("active");
   document.body.classList.remove("dragging");
   drag = null;
 }
 document.addEventListener("pointermove", pointerMove, {passive:false});
 document.addEventListener("pointerup", pointerUp);
 
-/* ==========
-   LIVE GUN
-   ========== */
+/* ===== Share as image ===== */
+function condividiNota(id){
+  const div = document.getElementById("note_"+id);
+  if(!div) return;
+  html2canvas(div).then(canvas=>{
+    canvas.toBlob(blob=>{
+      const file = new File([blob], "postit.png", {type:"image/png"});
+      if(navigator.canShare && navigator.canShare({files:[file]})){
+        navigator.share({title:"Post-it",text:"📌 Guarda questo post-it:",files:[file]}).catch(()=>{});
+      } else {
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "postit.png";
+        link.click();
+      }
+    });
+  });
+}
+
+/* ===== Render (nuovi sopra) ===== */
+function render(){
+  const board = document.getElementById("board");
+  board.innerHTML="";
+  Object.values(store)
+    .filter(n=>n && !n.deleted)
+    .sort((a,b)=> (b.date||0) - (a.date||0)) // nuovi/ultimo tocco sopra
+    .forEach(n=>{
+      const div = document.createElement("div");
+      div.id = "note_"+n.id;
+      div.className = `note ${n.color}`;
+      div.style.color = n.textColor;
+      div.style.left = (n.x||0) + "px";
+      div.style.top  = (n.y||0) + "px";
+      div.style.transform = `rotate(${n.rot}deg)`;
+
+      let deleteBtn = "";
+      if(!["black","ghost","madama","red","lilla","fucsia"].includes(n.color)){
+        deleteBtn = `<div class="delete" onclick="event.stopPropagation(); eliminaNota('${n.id}')">×</div>`;
+      }
+      const imgTag = n.image ? `<img src="${n.image}" style="max-width:90px; max-height:90px; border-radius:8px; margin-top:5px;">` : "";
+      const kb = (n.imageKB || (n.image ? Math.round(dataUrlBytes(n.image)/1024) : null));
+      const kbTag = n.image ? `<div class="imgkb">~${kb} KB</div>` : "";
+
+      div.innerHTML = `${deleteBtn}${imgTag}${kbTag}<div class="text">${n.text || ""}</div><small>${new Date(n.date||Date.now()).toLocaleString()}</small>`;
+
+      div.addEventListener("pointerdown",(e)=>{
+        if(e.target.classList.contains("delete")) return;
+        const elRect = div.getBoundingClientRect();
+        drag = { id:n.id, el:div, offsetX:e.clientX - elRect.left, offsetY:e.clientY - elRect.top, overShare:false };
+        div.style.transition = "none";
+        div.style.zIndex = 9999; // sale sopra temporaneamente
+        document.body.classList.add("dragging");
+        if(div.setPointerCapture){ try{ div.setPointerCapture(e.pointerId);}catch(_){ } }
+        e.preventDefault();
+      });
+
+      board.appendChild(div);
+    });
+}
+
+/* ===== Realtime P2P ===== */
 notesDB.map().on((n,id)=>{
   if(!n || !n.id || n.deleted){ delete store[id]; }
   else { store[id] = Object.assign(store[id]||{}, n); }
   render();
 });
+
+/* ===== Contatore ===== */
 counterDB.get("total").on(val=>{
   document.getElementById("counterBox").textContent = "📝 Totale post-it: " + (val || 0);
 });
 
-/* ==========
-   SNAPSHOT (BOOST SAFARI)
-   ========== */
-async function fetchSnapshot(){
+/* ===== Snapshot: iniziale + ogni 30s ===== */
+async function loadSnapshot(){
   try{
-    const res = await fetch('/snapshot.json', {cache:'no-store'});
-    if(!res.ok) throw new Error('HTTP '+res.status);
+    const res = await fetch("/snapshot.json", {cache:"no-store"});
+    if(!res.ok) throw new Error("no snapshot");
     const graph = await res.json();
-    const applied = mergeGraph(graph);
-    if(applied){
-      lastSnapshotAt = Date.now();
-      const t = new Date(lastSnapshotAt);
-      document.getElementById('snapTime').textContent = "— ultimo snapshot: " +
-        t.toLocaleTimeString();
-      const bar = document.getElementById('shareZone');
-      bar.classList.remove('warn'); bar.classList.add('ok');
+
+    // Converti il grafo GUN (chiavi) in oggetti note nel nostro store
+    // Prendiamo solo i nodi che sembrano note (hanno id/text/color)
+    const tmp = {};
+    Object.values(graph).forEach(node=>{
+      if(node && node.id && (node.text || node.image || node.color)){
+        tmp[node.id] = Object.assign(tmp[node.id]||{}, node);
+      }
+    });
+    // Se abbiamo trovato note, le mostriamo subito
+    if(Object.keys(tmp).length){
+      store = Object.assign({}, store, tmp);
       render();
     }
+    document.getElementById("lastSnapshot").textContent = "ultimo snapshot: " + new Date().toLocaleTimeString();
   }catch(e){
-    // snapshot non disponibile: mostro stato ma non blocco niente
-    document.getElementById('snapTime').textContent = "— snapshot non disponibile";
+    document.getElementById("lastSnapshot").textContent = "snapshot non disponibile";
   }
 }
 
-/* Converte il grafo GUN dello snapshot in oggetti nota nel nostro store */
-function mergeGraph(graph){
-  if(!graph || typeof graph !== 'object') return false;
-  let changed = false;
+// Avvio: prova a caricare subito lo snapshot, poi parte il P2P
+loadSnapshot();
+// Refresh snapshot ogni 30s (ibrido per Safari)
+setInterval(loadSnapshot, 30000);
 
-  for(const soul in graph){
-    if(!Object.prototype.hasOwnProperty.call(graph, soul)) continue;
-
-    // Note: nodi tipo "p2p-postit/<id>"
-    if(soul.startsWith('p2p-postit/')){
-      const id = soul.split('/')[1];
-      const node = graph[soul] || {};
-      const cur = store[id] || { id };
-      let touched = false;
-
-      for(const k in node){
-        if(k === '_' || k === '>') continue;
-        if(node[k] !== undefined && cur[k] !== node[k]){
-          cur[k] = node[k];
-          touched = true;
-        }
-      }
-      if(touched){
-        store[id] = cur;
-        changed = true;
-      }
-    }
-  }
-  return changed;
-}
-
-/* Avvio: prendo subito lo snapshot, poi lo aggiorno ogni 2s */
-fetchSnapshot();
-setInterval(fetchSnapshot, 2000);
+// Render di “mantenimento” ogni 1s (aiuta Safari a sembrare più live)
+setInterval(render, 1000);
 </script>
 </body>
 </html>
