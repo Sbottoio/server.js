@@ -146,31 +146,6 @@ body.dragging{ user-select:none; }
   from { box-shadow:0 0 5px #ff1744, 0 0 10px #ff1744; }
   to   { box-shadow:0 0 20px #ff1744, 0 0 40px #ff1744; }
 }
-
-#shareZone {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  width: 80px;
-  height: 60px;
-  background: url('https://upload.wikimedia.org/wikipedia/commons/4/4e/Envelope_font_awesome.svg') no-repeat center/contain;
-  opacity: 0.6;
-  transition: transform 0.2s, opacity 0.2s;
-  z-index: 2000;
-}
-#shareZone.active { opacity: 1; transform: scale(1.1); }
-
-#counterBox {
-  margin-top: 10px;
-  font-size: 14px;
-  color: #333;
-  font-weight: bold;
-}
-
-.sticker-img {
-  max-width: 70px;
-  margin: 5px auto;
-}
 </style>
 </head>
 <body>
@@ -217,34 +192,24 @@ body.dragging{ user-select:none; }
     <div id="board"></div>
   </div>
 
-  <div id="shareZone"></div>
   <div id="overlay" onclick="toggleRegolamento()"></div>
   <div id="regolamentoBox">
     <div class="close" onclick="toggleRegolamento()">×</div>
     <h2>👋 Benvenuto su sbotto.io</h2>
     <p>Bacheca anonima di post-it collaborativi.<br>Sfogati o lancia idee in tempo reale.</p>
-    <hr>
-    <h2>✨ In Diretta</h2>
-    <p>Ogni post-it che compare qui è stato scritto da qualcuno, da qualche parte, nello stesso momento.</p>
-    <hr>
-    <h2>📜 Regole</h2>
-    <ul>
-      <li>✍️ Messaggi brevi (max 70 caratteri).</li>
-      <li>🚫 No spam o insulti.</li>
-      <li>👻 Alcuni post-it speciali non si cancellano.</li>
-      <li>🤝 Rispetta gli altri e divertiti.</li>
-    </ul>
   </div>
 
 <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
 <script>
-const gun = Gun({ peers: ["https://sbotto-server.onrender.com/gun"] });
+const gun = Gun({
+  peers: ["https://sbotto-server.onrender.com/gun"]
+});
 const notesDB = gun.get("p2p-postit");
 const counterDB = gun.get("p2p-postit-counter");
 
 let store = {};
+let drag = null;
 
-// 📌 Mostra/Nascondi regolamento
 function toggleRegolamento(){
   const box = document.getElementById("regolamentoBox");
   const overlay = document.getElementById("overlay");
@@ -258,34 +223,30 @@ function aggiungiNota(){
   let text = document.getElementById("noteInput").value.trim();
   if(!text) return;
   if(text.length > 70) text = text.substring(0,67)+"...";
-
   const board = document.getElementById("board");
   const maxX = Math.max(0, board.clientWidth-150);
   const maxY = Math.max(0, board.clientHeight-170);
-
+  
   let note = {
     id: Math.random().toString(36).substr(2, 9),
-    text,
-    date: Date.now(),
+    text, date: Date.now(),
     x: Math.floor(Math.random()*maxX),
     y: Math.floor(Math.random()*maxY),
     rot: (Math.random()*10 - 5).toFixed(2)
   };
 
-  const mood = parseMood(text);
-  if (mood) note.sticker = mood;
+  // Sticker automatici in base al testo
+  if (text.includes("#felice")) note.sticker = "stickers/felice.jpg";
+  if (text.includes("#arrabbiato")) note.sticker = "stickers/arrabbiato.jpg";
+  if (text.includes("#triste")) note.sticker = "stickers/triste.jpg";
+
+  note.text = text.replace(/#felice|#arrabbiato|#triste/gi, "").trim();
 
   notesDB.get(note.id).put(note);
-  counterDB.get("total").once(val => counterDB.get("total").put((val||0)+1));
-  document.getElementById("noteInput").value = "";
-}
-
-// 🧠 Rileva mood
-function parseMood(text){
-  if (/#felice/i.test(text)) return "felice.png";
-  if (/#arrabbiato/i.test(text)) return "arrabbiato.png";
-  if (/#triste/i.test(text)) return "triste.png";
-  return null;
+  counterDB.get("total").once(val=>{
+    counterDB.get("total").put((val||0) + 1);
+  });
+  document.getElementById("noteInput").value="";
 }
 
 // 🧱 Renderizza board
@@ -295,19 +256,20 @@ function render(){
   Object.values(store).forEach(n=>{
     if(!n || n.deleted) return;
     const div = document.createElement("div");
+    div.id = "note_"+n.id;
     div.className = `note ${n.color || 'yellow'}`;
+    div.style.color = n.textColor || "#000";
     div.style.left = (n.x||0) + "px";
     div.style.top  = (n.y||0) + "px";
     div.style.transform = `rotate(${n.rot}deg)`;
 
-    let content = "";
-    if (n.sticker) {
-      content += `<img src="stickers/${n.sticker}" class="sticker-img">`;
-    }
-    content += `<div class="text">${n.text || ""}</div>`;
-    content += `<small>${new Date(n.date).toLocaleString()}</small>`;
+    let stickerTag = n.sticker ? `<img src="${n.sticker}" style="max-width:80px; max-height:80px; margin-bottom:5px;">` : "";
 
-    div.innerHTML = content;
+    div.innerHTML = `
+      ${stickerTag}
+      <div class="text">${n.text || ""}</div>
+      <small>${new Date(n.date).toLocaleString()}</small>
+    `;
     board.appendChild(div);
   });
 }
