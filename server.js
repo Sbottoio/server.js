@@ -6,10 +6,10 @@ const Gun = require('gun');
 const app = express();
 const PORT = process.env.PORT || 8765;
 
-// Percorso del file per salvare i dati
+// 📁 Percorso del file per salvare i dati
 const DATA_FILE = path.join(__dirname, 'data.json');
 
-// Carica dati salvati all'avvio
+// 📥 Carica i dati salvati (se esistono)
 let initialData = {};
 if (fs.existsSync(DATA_FILE)) {
   try {
@@ -20,23 +20,36 @@ if (fs.existsSync(DATA_FILE)) {
   }
 }
 
-// Serviamo la cartella public dove c'è index.html
+// 📂 Servi la cartella "public" dove si trova index.html
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Avvia server
+// 🚀 Avvia il server Express
 const server = app.listen(PORT, () => {
   console.log(`🚀 Nodo sbotto attivo su http://localhost:${PORT}`);
 });
 
-// Avvia GUN
-const gun = Gun({ web: server });
+// 🌐 Avvia GUN come nodo P2P
+const gun = Gun({
+  web: server,
+  file: false // disattiviamo il salvataggio automatico di GUN per gestirlo noi
+});
 
-// Salva dati su disco ogni volta che arrivano
+// 💾 Salvataggio automatico su file ogni volta che cambia qualcosa
 gun.on('put', () => {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(gun._.graph, null, 2));
+  try {
+    fs.writeFileSync(DATA_FILE, JSON.stringify(gun._.graph, null, 2));
+    console.log("💾 Dati salvati su data.json");
+  } catch (e) {
+    console.error("❌ Errore nel salvataggio dati:", e);
+  }
 });
 
-// Re-inserisci dati salvati all'avvio
-Object.keys(initialData).forEach(key => {
-  gun.get(key).put(initialData[key]);
-});
+// 🔁 Ricarica i dati salvati al riavvio
+if (Object.keys(initialData).length > 0) {
+  console.log("🔁 Ripristino dati nel grafo GUN...");
+  Object.entries(initialData).forEach(([key, value]) => {
+    gun.get(key).put(value);
+  });
+}
+
+console.log("✅ Nodo GUN attivo e pronto come peer P2P.");
