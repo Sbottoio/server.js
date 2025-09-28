@@ -97,7 +97,7 @@ body.dragging{ user-select:none; }
   font-size:13px; font-weight:bold; line-height:1.3; text-align:center;
   margin-top:6px; word-wrap:break-word;
 }
-.note small{ font-size:10px; color:#444; }
+note small{ font-size:10px; color:#444; }
 
 .note .imgkb {
   font-size:10px;
@@ -234,16 +234,14 @@ body.dragging{ user-select:none; }
 <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script>
-const gun = Gun({
-  peers: ["https://sbotto-server.onrender.com/gun"]
-});
+const gun = Gun({ peers: ["https://sbotto-server.onrender.com/gun"] });
 const notesDB = gun.get("p2p-postit");
 const counterDB = gun.get("p2p-postit-counter");
 
 let store = {};
 let drag = null;
 
-// 📌 Mostra/Nascondi regolamento
+/* ===== Helpers UI ===== */
 function toggleRegolamento(){
   const box = document.getElementById("regolamentoBox");
   const overlay = document.getElementById("overlay");
@@ -251,58 +249,112 @@ function toggleRegolamento(){
   box.style.display = visible ? "none" : "block";
   overlay.style.display = visible ? "none" : "block";
 }
-
-// 📏 Calcolo peso immagine
 function dataUrlBytes(dataUrl){
   const base64 = dataUrl.split(',')[1] || "";
   const len = base64.length;
   const padding = (base64.endsWith("==") ? 2 : (base64.endsWith("=") ? 1 : 0));
   return Math.max(0, Math.floor(len * 3 / 4) - padding);
 }
+function normalizeTag(s){
+  return s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+}
 
-// ✏️ Aggiungi post-it
+/* ===== Sticker tag ovunque nel testo (#arrabbiato) ===== */
+const STICKERS = { arrabbiato: "/stickers/arrabbiato.jpg" };
+
+/* Cerca il primo tag-sticker in qualunque punto del testo.
+   Se lo trova, restituisce { path, text } dove text è il testo senza quel tag. */
+function extractSticker(text){
+  const matches = text.match(/#[a-zàèéìòóù]+/gi) || [];
+  for(const rawTag of matches){
+    const key = normalizeTag(rawTag.slice(1));
+    if (STICKERS[key]){
+      const path = STICKERS[key];
+      const textSenzaTag = text.replace(new RegExp(rawTag, "i"), "").trim();
+      return { path, text: textSenzaTag };
+    }
+  }
+  return null;
+}
+
+/* ===== Hashtag di stile SOLO se all’inizio riga ===== */
+function parseSpecialColor(input){
+  const m = input.match(/^\s*#([a-zàèéìòóù]+)\b/i);
+  if(!m) return null;
+  const tag = m[1].toLowerCase();
+  const rest = input.replace(/^\s*#[^\s]+\s*/,'').trim();
+  if(tag === 'mod')                        return { color:'black',  textColor:'#fff', text:rest };
+  if(tag === 'ghost')                      return { color:'ghost',  textColor:'rgba(0,0,0,0.3)', text:rest };
+  if(tag === 'madama')                     return { color:'madama', textColor:'#fff', text:rest };
+  if(tag === 'red' || tag === 'rosso')    return { color:'red',    textColor:'#fff', text:rest };
+  if(tag === 'lilla')                      return { color:'lilla',  textColor:'#fff', text:rest };
+  if(tag === 'fucsia' || tag === 'fuxsia') return { color:'fucsia', textColor:'#fff', text:rest };
+  return null;
+}
+
+/* ===== Aggiungi nota ===== */
 function aggiungiNota(){
-  let text = document.getElementById("noteInput").value.trim();
-  if(!text) return;
-  if(text.length > 70) text = text.substring(0,67)+"...";
+  let raw = document.getElementById("noteInput").value.trim();
+  if(!raw) return;
+  if(raw.length > 70) raw = raw.substring(0,67)+"...";
+
+  // 1) Applico eventuale colore speciale se il tag è all’inizio
+  const special = parseSpecialColor(raw);
+  const baseText = special ? special.text : raw;
+
+  // 2) Cerco sticker ovunque nel testo (es. inizio o in mezzo)
+  const sticker = extractSticker(baseText);
+  const finalText = sticker ? sticker.text : baseText;
+
+  // Posizione casuale
   const board = document.getElementById("board");
   const maxX = Math.max(0, board.clientWidth-150);
   const maxY = Math.max(0, board.clientHeight-170);
+
   let note = {
     id: Math.random().toString(36).substr(2, 9),
-    text, date: Date.now(),
+    text: finalText,
+    date: Date.now(),
     x: Math.floor(Math.random()*maxX),
     y: Math.floor(Math.random()*maxY),
     rot: (Math.random()*10 - 5).toFixed(2)
   };
-  const special = parseSpecial(text);
-  if(special){ Object.assign(note, special); }
-  else {
+
+  if (special) {
+    note.color = special.color;
+    note.textColor = special.textColor;
+  } else {
     note.color = document.getElementById("colorSelect").value;
     note.textColor = document.getElementById("textColorSelect").value;
   }
 
+  // 3) Se c’è uno sticker (es. #arrabbiato) lo usiamo come immagine fissa
+  if (sticker) {
+    note.image = sticker.path;  // URL statico pubblico
+    note.imageKB = null;        // non mostriamo ~KB sugli sticker fissi
+  }
+
+  // 4) Se l’utente carica un file, quello ha priorità sullo sticker
   const fileInput = document.getElementById("imageInput");
   const file = fileInput.files[0];
-  if (file) {
+  if (!sticker && file) {
     const reader = new FileReader();
     reader.onload = function(e) {
       const img = new Image();
       img.onload = function() {
         const canvas = document.createElement("canvas");
         const maxSize = 150;
-        let width = img.width;
-        let height = img.height;
-        if (width > height && width > maxSize) { height *= maxSize / width; width = maxSize; }
-        else if (height > maxSize) { width *= maxSize / height; height = maxSize; }
-        canvas.width = Math.max(1, Math.round(width));
-        canvas.height = Math.max(1, Math.round(height));
+        let w = img.width, h = img.height;
+        if (w > h && w > maxSize) { h *= maxSize / w; w = maxSize; }
+        else if (h > maxSize)     { w *= maxSize / h; h = maxSize; }
+        canvas.width  = Math.max(1, Math.round(w));
+        canvas.height = Math.max(1, Math.round(h));
         const ctx = canvas.getContext("2d");
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = "high";
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         const dataUrl = canvas.toDataURL("image/webp", 0.7);
-        note.image = dataUrl;
+        note.image   = dataUrl;
         note.imageKB = Math.max(1, Math.round(dataUrlBytes(dataUrl)/1024));
         notesDB.get(note.id).put(note);
       };
@@ -313,48 +365,18 @@ function aggiungiNota(){
     notesDB.get(note.id).put(note);
   }
 
-  counterDB.get("total").once(val=>{
-    counterDB.get("total").put((val||0) + 1);
-  });
-
+  counterDB.get("total").once(v => counterDB.get("total").put((v||0)+1));
   document.getElementById("noteInput").value="";
 }
 
-// 🧠 Hashtag speciali (qui c’è #arrabbiato!)
-function parseSpecial(input){
-  const m = input.match(/^\s*#([a-zàèéìòóù]+)\b/i);
-  if(!m) return null;
-  const tag = m[1].toLowerCase();
-  const rest = input.replace(/^\s*#[^\s]+\s*/,'').trim();
-
-  if(tag === 'mod')    return { color:'black',  textColor:'#fff', text:rest };
-  if(tag === 'ghost')  return { color:'ghost',  textColor:'rgba(0,0,0,0.3)', text:rest };
-  if(tag === 'madama') return { color:'madama', textColor:'#fff', text:rest };
-  if(tag === 'red' || tag === 'rosso')   return { color:'red',   textColor:'#fff', text:rest };
-  if(tag === 'lilla')  return { color:'lilla',  textColor:'#fff', text:rest };
-  if(tag === 'fucsia' || tag === 'fuxsia') return { color:'fucsia', textColor:'#fff', text:rest };
-
-  // 👇 ecco il nostro sticker arrabbiato
-  if(tag === 'arrabbiato') {
-    return {
-      color: 'yellow',
-      textColor: '#000',
-      text: rest,
-      image: 'stickers/arrabbiato.jpg'
-    };
-  }
-
-  return null;
-}
-
-// 🗑️ Elimina post-it
+/* ===== Delete ===== */
 function eliminaNota(id){
   if(confirm("Vuoi eliminare questo post-it?")){
     notesDB.get(id).put({deleted:true});
   }
 }
 
-// ✋ Drag & drop
+/* ===== Drag & drop ===== */
 document.addEventListener("pointermove", e => {
   if(!drag) return;
   e.preventDefault();
@@ -370,7 +392,6 @@ document.addEventListener("pointermove", e => {
   el.style.left = x + "px";
   el.style.top  = y + "px";
 });
-
 document.addEventListener("pointerup", () => {
   if(!drag) return;
   const { id, el } = drag;
@@ -383,18 +404,28 @@ document.addEventListener("pointerup", () => {
   drag = null;
 });
 
-// 🧱 Renderizza board
+/* ===== Render ===== */
 function render(){
   const board = document.getElementById("board");
   board.innerHTML="";
   const sorted = Object.values(store).filter(n => n && !n.deleted).sort((a,b)=>b.date - a.date);
   sorted.forEach(n=>{
+    // Normalizzo vecchie note: se hanno #arrabbiato nel testo ma niente image, aggiungo ora
+    if(!n.image && typeof n.text === "string"){
+      const s = extractSticker(n.text);
+      if(s){
+        n.text = s.text;
+        n.image = s.path;
+        notesDB.get(n.id).put({ text:n.text, image:n.image });
+      }
+    }
+
     const div = document.createElement("div");
     div.id = "note_"+n.id;
     div.className = `note ${n.color}`;
     div.style.color = n.textColor;
-    div.style.left = (n.x||0) + "px";
-    div.style.top  = (n.y||0) + "px";
+    div.style.left  = (n.x||0) + "px";
+    div.style.top   = (n.y||0) + "px";
     div.style.transform = `rotate(${n.rot}deg)`;
 
     let deleteBtn = "";
@@ -402,17 +433,21 @@ function render(){
       deleteBtn = `<div class="delete" onclick="event.stopPropagation(); eliminaNota('${n.id}')">×</div>`;
     }
 
+    const showKB = n.image && typeof n.image === "string" && n.image.startsWith("data:");
     const imgTag = n.image ? `<img src="${n.image}" style="max-width:90px; max-height:90px; border-radius:8px; margin-top:5px;">` : "";
-    const kb = (n.imageKB || (n.image ? Math.round(dataUrlBytes(n.image)/1024) : null));
-    const kbTag = n.image ? `<div class="imgkb">~${kb} KB</div>` : "";
+    const kbTag  = showKB && n.imageKB ? `<div class="imgkb">~${n.imageKB} KB</div>` : "";
 
     div.innerHTML = `
       ${deleteBtn}
       ${imgTag}
       ${kbTag}
-      <div class="text">${n.text || ""}</div>
+      <div class="text"></div>
       <small>${new Date(n.date).toLocaleString()}</small>
     `;
+
+    // testo come textContent (niente HTML iniettato)
+    const textEl = div.querySelector(".text");
+    textEl.textContent = n.text || "";
 
     div.addEventListener("pointerdown",(e)=>{
       if(e.target.classList.contains("delete")) return;
@@ -431,13 +466,12 @@ function render(){
   });
 }
 
-// 📡 Aggiornamenti realtime
+/* ===== Realtime ===== */
 notesDB.map().on((n,id)=>{
   if(!n || !n.id || n.deleted){ delete store[id]; }
   else { store[id]=Object.assign(store[id]||{}, n); }
   render();
 });
-
 counterDB.get("total").on(val=>{
   document.getElementById("counterBox").textContent = "📝 Totale post-it: " + (val || 0);
 });
