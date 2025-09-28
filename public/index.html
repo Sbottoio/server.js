@@ -260,11 +260,30 @@ function dataUrlBytes(dataUrl){
   return Math.max(0, Math.floor(len * 3 / 4) - padding);
 }
 
+// 🧠 Rimpiazza hashtag sticker con immagini
+function replaceStickers(text) {
+  const stickers = {
+    "#arrabbiato": '<img src="stickers/arrabbiato.jpg" style="max-width:70px; border-radius:6px;">',
+    "#felice": '<img src="stickers/felice.jpg" style="max-width:70px; border-radius:6px;">',
+    "#triste": '<img src="stickers/triste.jpg" style="max-width:70px; border-radius:6px;">',
+    "#sorpreso": '<img src="stickers/sorpreso.jpg" style="max-width:70px; border-radius:6px;">'
+  };
+  for (const tag in stickers) {
+    const regex = new RegExp(tag, "gi");
+    text = text.replace(regex, stickers[tag]);
+  }
+  return text;
+}
+
 // ✏️ Aggiungi post-it
 function aggiungiNota(){
   let text = document.getElementById("noteInput").value.trim();
   if(!text) return;
   if(text.length > 70) text = text.substring(0,67)+"...";
+  
+  // 🔄 sostituisco gli hashtag con immagini
+  text = replaceStickers(text);
+
   const board = document.getElementById("board");
   const maxX = Math.max(0, board.clientWidth-150);
   const maxY = Math.max(0, board.clientHeight-170);
@@ -320,7 +339,7 @@ function aggiungiNota(){
   document.getElementById("noteInput").value="";
 }
 
-// 🧠 Rileva hashtag speciali
+// 🧠 Rileva hashtag speciali per colore
 function parseSpecial(input){
   const m = input.match(/^\s*#([a-zàèéìòóù]+)\b/i);
   if(!m) return null;
