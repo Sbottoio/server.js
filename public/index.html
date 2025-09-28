@@ -260,30 +260,11 @@ function dataUrlBytes(dataUrl){
   return Math.max(0, Math.floor(len * 3 / 4) - padding);
 }
 
-// 🧠 Rimpiazza hashtag sticker con immagini
-function replaceStickers(text) {
-  const stickers = {
-    "#arrabbiato": '<img src="stickers/arrabbiato.jpg" style="max-width:70px; border-radius:6px;">',
-    "#felice": '<img src="stickers/felice.jpg" style="max-width:70px; border-radius:6px;">',
-    "#triste": '<img src="stickers/triste.jpg" style="max-width:70px; border-radius:6px;">',
-    "#sorpreso": '<img src="stickers/sorpreso.jpg" style="max-width:70px; border-radius:6px;">'
-  };
-  for (const tag in stickers) {
-    const regex = new RegExp(tag, "gi");
-    text = text.replace(regex, stickers[tag]);
-  }
-  return text;
-}
-
 // ✏️ Aggiungi post-it
 function aggiungiNota(){
   let text = document.getElementById("noteInput").value.trim();
   if(!text) return;
   if(text.length > 70) text = text.substring(0,67)+"...";
-  
-  // 🔄 sostituisco gli hashtag con immagini
-  text = replaceStickers(text);
-
   const board = document.getElementById("board");
   const maxX = Math.max(0, board.clientWidth-150);
   const maxY = Math.max(0, board.clientHeight-170);
@@ -294,6 +275,8 @@ function aggiungiNota(){
     y: Math.floor(Math.random()*maxY),
     rot: (Math.random()*10 - 5).toFixed(2)
   };
+
+  // 🔥 Hashtag → sticker automatico
   const special = parseSpecial(text);
   if(special){ Object.assign(note, special); }
   else {
@@ -339,18 +322,36 @@ function aggiungiNota(){
   document.getElementById("noteInput").value="";
 }
 
-// 🧠 Rileva hashtag speciali per colore
+// 🧠 Hashtag speciali + sticker
 function parseSpecial(input){
   const m = input.match(/^\s*#([a-zàèéìòóù]+)\b/i);
   if(!m) return null;
   const tag = m[1].toLowerCase();
   const rest = input.replace(/^\s*#[^\s]+\s*/,'').trim();
+
+  const stickers = {
+    "arrabbiato": "stickers/arrabbiato.jpg",
+    "felice": "stickers/felice.jpg",
+    "triste": "stickers/triste.jpg",
+    "sorpreso": "stickers/sorpreso.jpg"
+  };
+
+  if(stickers[tag]){
+    return {
+      color: 'yellow',
+      textColor: '#000',
+      text: rest,
+      image: stickers[tag]
+    };
+  }
+
   if(tag === 'mod')    return { color:'black',  textColor:'#fff', text:rest };
   if(tag === 'ghost')  return { color:'ghost',  textColor:'rgba(0,0,0,0.3)', text:rest };
   if(tag === 'madama') return { color:'madama', textColor:'#fff', text:rest };
   if(tag === 'red' || tag === 'rosso')   return { color:'red',   textColor:'#fff', text:rest };
   if(tag === 'lilla')  return { color:'lilla',  textColor:'#fff', text:rest };
   if(tag === 'fucsia' || tag === 'fuxsia') return { color:'fucsia', textColor:'#fff', text:rest };
+
   return null;
 }
 
@@ -394,7 +395,6 @@ document.addEventListener("pointerup", () => {
 function render(){
   const board = document.getElementById("board");
   board.innerHTML="";
-  // Ordina per data decrescente
   const sorted = Object.values(store).filter(n => n && !n.deleted).sort((a,b)=>b.date - a.date);
   sorted.forEach(n=>{
     const div = document.createElement("div");
@@ -439,7 +439,7 @@ function render(){
   });
 }
 
-// 📡 Aggiornamenti in tempo reale
+// 📡 Aggiornamenti realtime
 notesDB.map().on((n,id)=>{
   if(!n || !n.id || n.deleted){ delete store[id]; }
   else { store[id]=Object.assign(store[id]||{}, n); }
