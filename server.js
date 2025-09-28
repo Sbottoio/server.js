@@ -25,8 +25,28 @@ try {
   initialData = {};
 }
 
-// 📂 Servi i file statici (index.html ecc.)
+// 📂 Servi i file statici (index.html, stickers, ecc.)
 app.use(express.static(path.join(__dirname, 'public')));
+
+// ✅ Fallback per la home (molto importante su Render)
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// 📤 Rotta per snapshot JSON (per Safari e refresh automatici)
+app.get('/snapshot.json', (req, res) => {
+  try {
+    if (fs.existsSync(DATA_FILE)) {
+      res.setHeader('Content-Type', 'application/json');
+      res.sendFile(DATA_FILE);
+    } else {
+      res.json({});
+    }
+  } catch (e) {
+    console.error("⚠️ Errore leggendo snapshot:", e);
+    res.status(500).json({ error: "Errore interno del server" });
+  }
+});
 
 // 🚀 Avvia il server Express
 const server = app.listen(PORT, () => {
@@ -36,10 +56,10 @@ const server = app.listen(PORT, () => {
 // 🌐 Avvia GUN come nodo P2P
 const gun = Gun({
   web: server,
-  file: false // disattiviamo il salvataggio automatico interno
+  file: false // disattiva il salvataggio automatico interno
 });
 
-// 💾 Salvataggio automatico su file ogni volta che cambia qualcosa
+// 💾 Salvataggio automatico dei dati GUN in data.json
 gun.on('put', () => {
   try {
     const graph = gun._.graph || {};
@@ -57,20 +77,5 @@ if (Object.keys(initialData).length > 0) {
     gun.get(key).put(value);
   });
 }
-
-// 📤 Rotta per lo snapshot JSON (per Safari e refresh automatici)
-app.get('/snapshot.json', (req, res) => {
-  try {
-    if (fs.existsSync(DATA_FILE)) {
-      res.setHeader('Content-Type', 'application/json');
-      res.sendFile(DATA_FILE);
-    } else {
-      res.json({});
-    }
-  } catch (e) {
-    console.error("⚠️ Errore leggendo snapshot:", e);
-    res.status(500).json({ error: "Errore interno del server" });
-  }
-});
 
 console.log("✅ Nodo GUN attivo e pronto come peer P2P.");
